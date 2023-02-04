@@ -1,27 +1,70 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <errno.h> 
+#include <errno.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
-#include "comms.h"
+#include "communicate.h"
+#include "article.h"
+
+// thread function prototypes
+void* sendThreadFun(void* arg);
+void* recvThreadFun(void* arg);
+void* pingThreadFun(void* arg);
 
 int main(int argc, char* argv[])
 {
     CLIENT *clnt; // rpc connection client
     int listener_fd; // udp listening socket for incoming articles
 
-	// check host name/ip provided
-    if(argc < 2) 
+    // validate input args
+    if(argc < 2 || argc > 4)
     {
-		fprintf (stderr, "No remote host specified. Exiting...\n");
-		exit (1);
-	}
+        fprintf (stderr, "ERROR: Invalid number of input args received. Expected:\n");
+        fprintf (stderr, "  #1 (required) - Group Server Name\n");
+        fprintf (stderr, "  #2 (optional) - Test Article\n");
+        fprintf (stderr, "  #3 (optional) - Test Unsubscribe Time(sec)\n");
+		exit(EXIT_FAILURE);
+    }
+
+    // save group server name
+    char* group_server = argv[1];
+
+    // save and validate test article
+    Article test_article;
+    int test_article_inputted = 0;
+    if(argc > 2)
+    {
+        test_article_inputted = 1;
+        
+        if(articleDecode(argv[2], &test_article))
+        {
+            fprintf(stderr, "ERROR: Test article failed validdation");
+            exit(EXIT_FAILURE);
+        }        
+    }
+
+    // save and validate unsubscribe duration
+    int test_unsubscribe_duration = 0;
+    if(argc > 3)
+    {
+        test_unsubscribe_duration = atoi(argv[3]);
+    }
+    
+    // create threads
+    pthread_t send_thread_id;
+    pthread_t recv_thread_id;
+    pthread_t ping_thread_id;
+
+    pthread_create(&send_thread_id, NULL, sendThreadFun, NULL);
+    pthread_create(&recv_thread_id, NULL, recvThreadFun, NULL);
+    pthread_create(&ping_thread_id, NULL, pingThreadFun, NULL);
+    
 
     // RPC connect to remote host
     printf("Connecting to remote host: %s\n", argv[1]);  
-    clnt = clnt_create (argv[1], Article, VERSION, "udp");
+    clnt = clnt_create (argv[1], COMMUNICATE_PROG, COMMUNICATE_VERSION, "udp");
     if (clnt == NULL) 
     {
         clnt_pcreateerror (argv[1]);
@@ -105,4 +148,22 @@ int main(int argc, char* argv[])
     // leave TODO
 	clnt_destroy (clnt);
     return 0; 
+}
+
+// thread reponsible for reading user input and sending requests
+void* sendThreadFun(void* arg)
+{
+
+}
+
+// thread for recving articles
+void* recvThreadFun(void* arg)
+{
+
+}
+
+// thread responsible for pringing RPC
+void* pingThreadFun(void* arg)
+{
+    
 }

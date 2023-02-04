@@ -1,4 +1,4 @@
-#include "comms.h"
+#include "communicate.h"
 #include <stdio.h>
 
 int *

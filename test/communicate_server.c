@@ -4,7 +4,7 @@
  * as a guideline for developing your own functions.
  */
 
-#include "comms.h"
+#include "communicate.h"
 
 int *
 join_1_svc(char *arg1, int arg2,  struct svc_req *rqstp)

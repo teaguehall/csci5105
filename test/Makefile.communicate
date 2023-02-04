@@ -3,18 +3,18 @@
 
 # Parameters
 
-CLIENT = comms_client
-SERVER = comms_server
+CLIENT = communicate_client
+SERVER = communicate_server
 
 SOURCES_CLNT.c = 
 SOURCES_CLNT.h = 
 SOURCES_SVC.c = 
 SOURCES_SVC.h = 
-SOURCES.x = comms.x
+SOURCES.x = communicate.x
 
-TARGETS_SVC.c = comms_svc.c comms_server.c comms_xdr.c 
-TARGETS_CLNT.c = comms_clnt.c comms_client.c comms_xdr.c 
-TARGETS = comms.h comms_xdr.c comms_clnt.c comms_svc.c comms_client.c comms_server.c
+TARGETS_SVC.c = communicate_svc.c communicate_server.c communicate_xdr.c 
+TARGETS_CLNT.c = communicate_clnt.c communicate_client.c communicate_xdr.c 
+TARGETS = communicate.h communicate_xdr.c communicate_clnt.c communicate_svc.c communicate_client.c communicate_server.c
 
 OBJECTS_CLNT = $(SOURCES_CLNT.c:%.c=%.o) $(TARGETS_CLNT.c:%.c=%.o)
 OBJECTS_SVC = $(SOURCES_SVC.c:%.c=%.o) $(TARGETS_SVC.c:%.c=%.o)

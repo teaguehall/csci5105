@@ -4,11 +4,11 @@
  * as a guideline for developing your own functions.
  */
 
-#include "comms.h"
+#include "communicate.h"
 
 
 void
-article_1(char *host)
+communicate_prog_1(char *host)
 {
 	CLIENT *clnt;
 	int  *result_1;
@@ -32,7 +32,7 @@ article_1(char *host)
 	int  *result_6;
 
 #ifndef	DEBUG
-	clnt = clnt_create (host, Article, VERSION, "udp");
+	clnt = clnt_create (host, COMMUNICATE_PROG, COMMUNICATE_VERSION, "udp");
 	if (clnt == NULL) {
 		clnt_pcreateerror (host);
 		exit (1);
@@ -79,6 +79,6 @@ main (int argc, char *argv[])
 		exit (1);
 	}
 	host = argv[1];
-	article_1 (host);
+	communicate_prog_1 (host);
 exit (0);
 }

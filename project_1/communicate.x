@@ -1,8 +1,8 @@
 /* article service interface */
 
-program Article 
+program COMMUNICATE_PROG 
 {
-    version VERSION 
+    version COMMUNICATE_VERSION 
     {
         int join(string, int) = 1;
         int leave(string, int) = 2;
