@@ -2,15 +2,18 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h> 
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
 #include "comms.h"
 
 int main(int argc, char* argv[])
 {
     CLIENT *clnt; // rpc connection client
-    int listener_fd // udp listening socket for incoming articles
+    int listener_fd; // udp listening socket for incoming articles
 
 	// check host name/ip provided
-    if (argc < 2) 
+    if(argc < 2) 
     {
 		fprintf (stderr, "No remote host specified. Exiting...\n");
 		exit (1);
@@ -26,20 +29,37 @@ int main(int argc, char* argv[])
     }
 
     // create and bind UDP listening socket
+    struct sockaddr_in cliaddr, servaddr;
+
+    memset(&cliaddr, 0, sizeof(cliaddr));
+    memset(&servaddr, 0, sizeof(servaddr));
+
     if((listener_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
     {
-        fprintf("ERROR: Client failed to create UDP listening socket: %s. Exiting...", strerror(errno));
+        fprintf(stderr, "ERROR: Client failed to create UDP listening socket: %s. Exiting...", strerror(errno));
         exit(-1);
     }
 
+    cliaddr.sin_family = AF_INET;
+    cliaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+	cliaddr.sin_port = 0; // listen on any available port
 
-    int ;
-    if()
+    if(bind(listener_fd, (const struct sockaddr *)&cliaddr, sizeof(cliaddr)) == -1)
+    {
+        fprintf(stderr, "ERROR: Failed to bind socket to port: %s. Exiting...", strerror(errno));
+        exit(-1);
+    }
 
-	if ((s=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
-	{
-		die("socket");
-	}
+    // grab listening host name + port number
+    struct sockaddr temp;
+    int namelen;
+
+    struct sockaddr_in sin;
+    socklen_t len = sizeof(sin);
+    if (getsockname(listener_fd, (struct sockaddr *)&sin, &len) == -1)
+        perror("getsockname");
+    else
+        printf("port number %d\n", ntohs(sin.sin_port));
 
 
     // grab host name and available port for UDP listening
