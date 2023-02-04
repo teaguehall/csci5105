@@ -9,8 +9,12 @@ clean:
 rpcgen:
 	rpcgen -N comms.x
 
-server.out:
-	gcc server.c -o server.out
+server.out: comms.h comms_xdr.c comms_svc.c
+	gcc server_routines.c comms_xdr.c comms_svc.c -lnsl -o server.out
 
-client.out:
-	gcc client.c -o client.out
+client.out: comms.h comms_xdr.c comms_clnt.c
+	gcc client.c comms_xdr.c comms_clnt.c -o client.out
+
+.PHONY: test
+test:
+	
