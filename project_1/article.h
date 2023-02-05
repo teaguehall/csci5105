@@ -14,9 +14,6 @@ typedef struct Article {
     char originator[ARTICLE_MAX_BYTES];
     char org[ARTICLE_MAX_BYTES];
     char contents[ARTICLE_MAX_BYTES];
-
-    int subscribe_ok;  // 1 if article meets subscribe requirements, 0 otherwise
-    int publish_ok; // 1 if article meets publish requirements, 0 otherwise
 } Article;
 
 int articleDecode(char* bytes, Article* output);

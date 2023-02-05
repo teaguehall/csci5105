@@ -201,7 +201,8 @@ void* sendThreadFun(void* arg)
         int* ptr_result;
         
         printf("enter command: leave, subscribe, unsubsribe, publish\n");
-        scanf("%s", input);
+        fgets(input, sizeof(input), stdin);
+        input[strcspn(input, "\n")] = 0; // remove new line character
 
         //////////////////////////////////////// leave handler //////////////////////////////////////////
         if(strcmp("leave", input) == 0)
@@ -236,12 +237,20 @@ void* sendThreadFun(void* arg)
         else if(strcmp("subscribe", input) == 0)
         {
             printf("enter subscribe article: <type>;<originator>;<org>;\n");
-            scanf("%s", input);
+            fgets(input, sizeof(input), stdin);
+            input[strcspn(input, "\n")] = 0; // remove new line character
 
             // validate article
             if(articleDecode(input, &article))
             {
                 fprintf(stderr, "ERROR: Article format failed validation. Try again...\n");
+                continue;
+            }
+
+            // make sure message does not contain contents
+            if(article.contents != NULL)
+            {
+                fprintf(stderr, "ERROR: Subscribe article has non-null contents. Try again...\n");
                 continue;
             }
             
@@ -270,16 +279,20 @@ void* sendThreadFun(void* arg)
                 exit(EXIT_FAILURE);
             }
         }
+        //////////////////////////////////// unsubscribe handler ///////////////////////////////////////
         else if(strcmp("unsubsribe", input) == 0)
         {
             // TODO 
         }
+        ///////////////////////////////////// publish handler ////////////////////////////////////////
         else if(strcmp("publish", input) == 0)
         {
             // TODO 
         }
         else
         {
+            printf("hello printing: %s\n", input);
+            
             fprintf(stderr, "ERROR: Unrecognized command. Try again...\n");
         }
     }

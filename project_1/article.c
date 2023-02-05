@@ -55,21 +55,10 @@ int articleDecode(char* bytes, Article* output)
         return 1;
     }
 
-    // set okay flag if article meets publish requirements
-    if((output->type != NULL || output->originator != NULL || output->org != NULL))
+    // make sure message has header information
+    if((output->type == NULL && output->originator == NULL && output->org == NULL))
     {
-        if(output->contents == NULL)
-        {
-            output->subscribe_ok = 1;
-        }
-        else
-        {
-            output->publish_ok = 1;
-        }
-    }
-    else
-    {
-        fprintf(stderr, "ERROR: Article does not meet either publish or subscribe/unsubscribe message requirements\n", output->type);
+        fprintf(stderr, "ERROR: Article is missing type, originator, AND org\n");
         return 1;
     }
 
