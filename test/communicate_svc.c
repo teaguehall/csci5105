@@ -19,31 +19,31 @@
 static int *
 _join_1 (join_1_argument *argp, struct svc_req *rqstp)
 {
-	return (join_1_svc(argp->arg1, argp->arg2, rqstp));
+	return (join_1_svc(argp->ip, argp->port, rqstp));
 }
 
 static int *
 _leave_1 (leave_1_argument *argp, struct svc_req *rqstp)
 {
-	return (leave_1_svc(argp->arg1, argp->arg2, rqstp));
+	return (leave_1_svc(argp->ip, argp->port, rqstp));
 }
 
 static int *
 _subscribe_1 (subscribe_1_argument *argp, struct svc_req *rqstp)
 {
-	return (subscribe_1_svc(argp->arg1, argp->arg2, argp->arg3, rqstp));
+	return (subscribe_1_svc(argp->ip, argp->port, argp->article, rqstp));
 }
 
 static int *
 _unsubscribe_1 (unsubscribe_1_argument *argp, struct svc_req *rqstp)
 {
-	return (unsubscribe_1_svc(argp->arg1, argp->arg2, argp->arg3, rqstp));
+	return (unsubscribe_1_svc(argp->ip, argp->port, argp->article, rqstp));
 }
 
 static int *
 _publish_1 (publish_1_argument *argp, struct svc_req *rqstp)
 {
-	return (publish_1_svc(argp->arg1, argp->arg2, argp->arg3, rqstp));
+	return (publish_1_svc(argp->ip, argp->port, argp->article, rqstp));
 }
 
 static int *

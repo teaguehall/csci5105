@@ -13,7 +13,7 @@ server.out: communicate.h communicate_xdr.c communicate_svc.c article.c article.
 	gcc article.c server_routines.c communicate_xdr.c communicate_svc.c -lnsl -o server.out
 
 client.out: communicate.h communicate_xdr.c communicate_clnt.c  article.c article.h
-	gcc article.c client.c communicate_xdr.c communicate_clnt.c -o client.out
+	gcc article.c client.c communicate_xdr.c communicate_clnt.c -lpthread -o client.out
 
 .PHONY: test
 test:

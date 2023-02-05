@@ -4,11 +4,11 @@ program COMMUNICATE_PROG
 {
     version COMMUNICATE_VERSION 
     {
-        int join(string, int) = 1;
-        int leave(string, int) = 2;
-        int subscribe(string, int, string) = 3;
-        int unsubscribe(string, int, string) = 4;
-        int publish(string, int, string) = 5;
+        int join(string ip, int port) = 1;
+        int leave(string ip, int port) = 2;
+        int subscribe(string ip, int port, string article) = 3;
+        int unsubscribe(string ip, int port, string article) = 4;
+        int publish(string ip, int port, string article) = 5;
         int ping(void) = 6;
     } = 1;
 } = 9999;

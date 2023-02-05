@@ -12,23 +12,23 @@ communicate_prog_1(char *host)
 {
 	CLIENT *clnt;
 	int  *result_1;
-	char *join_1_arg1;
-	int join_1_arg2;
+	char *join_1_ip;
+	int join_1_port;
 	int  *result_2;
-	char *leave_1_arg1;
-	int leave_1_arg2;
+	char *leave_1_ip;
+	int leave_1_port;
 	int  *result_3;
-	char *subscribe_1_arg1;
-	int subscribe_1_arg2;
-	char *subscribe_1_arg3;
+	char *subscribe_1_ip;
+	int subscribe_1_port;
+	char *subscribe_1_article;
 	int  *result_4;
-	char *unsubscribe_1_arg1;
-	int unsubscribe_1_arg2;
-	char *unsubscribe_1_arg3;
+	char *unsubscribe_1_ip;
+	int unsubscribe_1_port;
+	char *unsubscribe_1_article;
 	int  *result_5;
-	char *publish_1_arg1;
-	int publish_1_arg2;
-	char *publish_1_arg3;
+	char *publish_1_ip;
+	int publish_1_port;
+	char *publish_1_article;
 	int  *result_6;
 
 #ifndef	DEBUG
@@ -39,23 +39,23 @@ communicate_prog_1(char *host)
 	}
 #endif	/* DEBUG */
 
-	result_1 = join_1(join_1_arg1, join_1_arg2, clnt);
+	result_1 = join_1(join_1_ip, join_1_port, clnt);
 	if (result_1 == (int *) NULL) {
 		clnt_perror (clnt, "call failed");
 	}
-	result_2 = leave_1(leave_1_arg1, leave_1_arg2, clnt);
+	result_2 = leave_1(leave_1_ip, leave_1_port, clnt);
 	if (result_2 == (int *) NULL) {
 		clnt_perror (clnt, "call failed");
 	}
-	result_3 = subscribe_1(subscribe_1_arg1, subscribe_1_arg2, subscribe_1_arg3, clnt);
+	result_3 = subscribe_1(subscribe_1_ip, subscribe_1_port, subscribe_1_article, clnt);
 	if (result_3 == (int *) NULL) {
 		clnt_perror (clnt, "call failed");
 	}
-	result_4 = unsubscribe_1(unsubscribe_1_arg1, unsubscribe_1_arg2, unsubscribe_1_arg3, clnt);
+	result_4 = unsubscribe_1(unsubscribe_1_ip, unsubscribe_1_port, unsubscribe_1_article, clnt);
 	if (result_4 == (int *) NULL) {
 		clnt_perror (clnt, "call failed");
 	}
-	result_5 = publish_1(publish_1_arg1, publish_1_arg2, publish_1_arg3, clnt);
+	result_5 = publish_1(publish_1_ip, publish_1_port, publish_1_article, clnt);
 	if (result_5 == (int *) NULL) {
 		clnt_perror (clnt, "call failed");
 	}

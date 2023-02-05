@@ -7,7 +7,7 @@
 #include "communicate.h"
 
 int *
-join_1_svc(char *arg1, int arg2,  struct svc_req *rqstp)
+join_1_svc(char *ip, int port,  struct svc_req *rqstp)
 {
 	static int  result;
 
@@ -19,7 +19,7 @@ join_1_svc(char *arg1, int arg2,  struct svc_req *rqstp)
 }
 
 int *
-leave_1_svc(char *arg1, int arg2,  struct svc_req *rqstp)
+leave_1_svc(char *ip, int port,  struct svc_req *rqstp)
 {
 	static int  result;
 
@@ -31,7 +31,7 @@ leave_1_svc(char *arg1, int arg2,  struct svc_req *rqstp)
 }
 
 int *
-subscribe_1_svc(char *arg1, int arg2, char *arg3,  struct svc_req *rqstp)
+subscribe_1_svc(char *ip, int port, char *article,  struct svc_req *rqstp)
 {
 	static int  result;
 
@@ -43,7 +43,7 @@ subscribe_1_svc(char *arg1, int arg2, char *arg3,  struct svc_req *rqstp)
 }
 
 int *
-unsubscribe_1_svc(char *arg1, int arg2, char *arg3,  struct svc_req *rqstp)
+unsubscribe_1_svc(char *ip, int port, char *article,  struct svc_req *rqstp)
 {
 	static int  result;
 
@@ -55,7 +55,7 @@ unsubscribe_1_svc(char *arg1, int arg2, char *arg3,  struct svc_req *rqstp)
 }
 
 int *
-publish_1_svc(char *arg1, int arg2, char *arg3,  struct svc_req *rqstp)
+publish_1_svc(char *ip, int port, char *article,  struct svc_req *rqstp)
 {
 	static int  result;
 

@@ -1,6 +1,10 @@
 {
     "files.associations": {
         "*.ipp": "c",
-        "functional": "c"
+        "functional": "c",
+        "socket.h": "c",
+        "cmath": "c",
+        "complex": "c",
+        "communicate.h": "c"
     }
 }

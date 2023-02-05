@@ -15,35 +15,35 @@ extern "C" {
 
 
 struct join_1_argument {
-	char *arg1;
-	int arg2;
+	char *ip;
+	int port;
 };
 typedef struct join_1_argument join_1_argument;
 
 struct leave_1_argument {
-	char *arg1;
-	int arg2;
+	char *ip;
+	int port;
 };
 typedef struct leave_1_argument leave_1_argument;
 
 struct subscribe_1_argument {
-	char *arg1;
-	int arg2;
-	char *arg3;
+	char *ip;
+	int port;
+	char *article;
 };
 typedef struct subscribe_1_argument subscribe_1_argument;
 
 struct unsubscribe_1_argument {
-	char *arg1;
-	int arg2;
-	char *arg3;
+	char *ip;
+	int port;
+	char *article;
 };
 typedef struct unsubscribe_1_argument unsubscribe_1_argument;
 
 struct publish_1_argument {
-	char *arg1;
-	int arg2;
-	char *arg3;
+	char *ip;
+	int port;
+	char *article;
 };
 typedef struct publish_1_argument publish_1_argument;
 

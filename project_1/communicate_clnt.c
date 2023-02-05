@@ -10,14 +10,14 @@
 static struct timeval TIMEOUT = { 25, 0 };
 
 int *
-join_1(char *arg1, int arg2,  CLIENT *clnt)
+join_1(char *ip, int port,  CLIENT *clnt)
 {
 	join_1_argument arg;
 	static int clnt_res;
 
 	memset((char *)&clnt_res, 0, sizeof(clnt_res));
-	arg.arg1 = arg1;
-	arg.arg2 = arg2;
+	arg.ip = ip;
+	arg.port = port;
 	if (clnt_call (clnt, join, (xdrproc_t) xdr_join_1_argument, (caddr_t) &arg,
 		(xdrproc_t) xdr_int, (caddr_t) &clnt_res,
 		TIMEOUT) != RPC_SUCCESS) {
@@ -27,14 +27,14 @@ join_1(char *arg1, int arg2,  CLIENT *clnt)
 }
 
 int *
-leave_1(char *arg1, int arg2,  CLIENT *clnt)
+leave_1(char *ip, int port,  CLIENT *clnt)
 {
 	leave_1_argument arg;
 	static int clnt_res;
 
 	memset((char *)&clnt_res, 0, sizeof(clnt_res));
-	arg.arg1 = arg1;
-	arg.arg2 = arg2;
+	arg.ip = ip;
+	arg.port = port;
 	if (clnt_call (clnt, leave, (xdrproc_t) xdr_leave_1_argument, (caddr_t) &arg,
 		(xdrproc_t) xdr_int, (caddr_t) &clnt_res,
 		TIMEOUT) != RPC_SUCCESS) {
@@ -44,15 +44,15 @@ leave_1(char *arg1, int arg2,  CLIENT *clnt)
 }
 
 int *
-subscribe_1(char *arg1, int arg2, char *arg3,  CLIENT *clnt)
+subscribe_1(char *ip, int port, char *article,  CLIENT *clnt)
 {
 	subscribe_1_argument arg;
 	static int clnt_res;
 
 	memset((char *)&clnt_res, 0, sizeof(clnt_res));
-	arg.arg1 = arg1;
-	arg.arg2 = arg2;
-	arg.arg3 = arg3;
+	arg.ip = ip;
+	arg.port = port;
+	arg.article = article;
 	if (clnt_call (clnt, subscribe, (xdrproc_t) xdr_subscribe_1_argument, (caddr_t) &arg,
 		(xdrproc_t) xdr_int, (caddr_t) &clnt_res,
 		TIMEOUT) != RPC_SUCCESS) {
@@ -62,15 +62,15 @@ subscribe_1(char *arg1, int arg2, char *arg3,  CLIENT *clnt)
 }
 
 int *
-unsubscribe_1(char *arg1, int arg2, char *arg3,  CLIENT *clnt)
+unsubscribe_1(char *ip, int port, char *article,  CLIENT *clnt)
 {
 	unsubscribe_1_argument arg;
 	static int clnt_res;
 
 	memset((char *)&clnt_res, 0, sizeof(clnt_res));
-	arg.arg1 = arg1;
-	arg.arg2 = arg2;
-	arg.arg3 = arg3;
+	arg.ip = ip;
+	arg.port = port;
+	arg.article = article;
 	if (clnt_call (clnt, unsubscribe, (xdrproc_t) xdr_unsubscribe_1_argument, (caddr_t) &arg,
 		(xdrproc_t) xdr_int, (caddr_t) &clnt_res,
 		TIMEOUT) != RPC_SUCCESS) {
@@ -80,15 +80,15 @@ unsubscribe_1(char *arg1, int arg2, char *arg3,  CLIENT *clnt)
 }
 
 int *
-publish_1(char *arg1, int arg2, char *arg3,  CLIENT *clnt)
+publish_1(char *ip, int port, char *article,  CLIENT *clnt)
 {
 	publish_1_argument arg;
 	static int clnt_res;
 
 	memset((char *)&clnt_res, 0, sizeof(clnt_res));
-	arg.arg1 = arg1;
-	arg.arg2 = arg2;
-	arg.arg3 = arg3;
+	arg.ip = ip;
+	arg.port = port;
+	arg.article = article;
 	if (clnt_call (clnt, publish, (xdrproc_t) xdr_publish_1_argument, (caddr_t) &arg,
 		(xdrproc_t) xdr_int, (caddr_t) &clnt_res,
 		TIMEOUT) != RPC_SUCCESS) {
