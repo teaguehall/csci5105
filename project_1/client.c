@@ -62,15 +62,14 @@ int main(int argc, char* argv[])
         test_unsubscribe_duration = atoi(argv[3]);
     }
 
-    // RPC connect to remote host
-    printf("Connecting to remote host: %s\n", group_server);  
+    // Create RPC client
+    printf("Creating RPC client to for remote host: %s\n", group_server);  
     clnt = clnt_create (group_server, COMMUNICATE_PROG, COMMUNICATE_VERSION, "udp");
     if (clnt == NULL) 
     {
         clnt_pcreateerror (group_server);
         exit (EXIT_FAILURE);
     }
-    printf("Successfully connected to remote host: %s\n", group_server);  
 
     int socket_fd;
     struct sockaddr_in cliaddr, servaddr;
@@ -93,7 +92,7 @@ int main(int argc, char* argv[])
     {
         fprintf(stderr, "ERROR: Failed to bind socket to port: %s. Exiting...", strerror(errno));
         exit(EXIT_FAILURE);
-    } 
+    }
 
     // determine IP address to send to server
     // TODO - is it okay to send name instead of IP address? 
@@ -113,16 +112,12 @@ int main(int argc, char* argv[])
         client_port = ntohs(temp.sin_port);
     }
 
-    //char* my_addr = inet_ntoa(cliaddr.sin_addr);
-    //printf("my_addr = %s\n", my_addr);
-    //printf("client_addr = %s\n", client_addr);
-    //printf("client_port = %d\n", client_port);
-
     // send RCP-join message
     int* ptr_result;
     if((ptr_result = join_1(client_hostname, client_port, clnt)) == NULL)
     {
-        clnt_perror(clnt, "call failed");   
+        clnt_perror(clnt, "RPC-JOIN failed. Exiting...");
+        exit(EXIT_FAILURE);
     }
     else if(*ptr_result)
     {
@@ -191,7 +186,62 @@ int main(int argc, char* argv[])
 // thread reponsible for reading user input and sending requests
 void* sendThreadFun(void* arg)
 {
-    printf("hello from thread 1\n");
+    char input[512];
+
+    //printf("Enter a supported command:\n");
+    //printf("leave\n");
+    //printf("subscribe <type>;<originator>;<org>;\n");
+    //printf("unsubscribe <type>;<originator>;<org>;\n");
+    //printf("publish <type>;<originator>;<org>;<contents>\n");
+
+    // indefinitely 
+    while(1)
+    {
+        int* ptr_result;
+        
+        printf("enter command: leave, subscribe, unsubsribe, publish\n");
+        scanf("%s", input);
+
+        if(strcmp("leave", input) == 0)
+        {
+            // grab rpc lock
+            if(pthread_mutex_lock(&lock_rpc) != 0)
+            {
+                fprintf(stderr, "ERROR: failed to lock rpc mutex: %s. Exiting...", strerror(errno));
+                exit(EXIT_FAILURE);
+            }
+
+            // send leave message
+            if((ptr_result = leave_1(clnt)) == NULL)
+            {
+                fprintf(stderr, "ERROR: Server failed to respond to LEAVE. Exiting...\n");
+                exit(EXIT_FAILURE);
+            }
+
+            // release rpc lock
+            if(pthread_mutex_unlock(&lock_rpc) != 0)
+            {
+                fprintf(stderr, "ERROR: failed to unlock rpc mutex: %s. Exiting...", strerror(errno));
+                exit(EXIT_FAILURE);
+            }
+        }
+        else if(strcmp("subscribe", input) == 0)
+        {
+            // TODO 
+        }
+        else if(strcmp("unsubsribe", input) == 0)
+        {
+            // TODO 
+        }
+        else if(strcmp("publish", input) == 0)
+        {
+            // TODO 
+        }
+        else
+        {
+            printf("Unrecognized command\n");
+        }
+    }
 }
 
 // thread for recving articles
