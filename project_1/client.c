@@ -186,6 +186,7 @@ int main(int argc, char* argv[])
 // thread reponsible for reading user input and sending requests
 void* sendThreadFun(void* arg)
 {
+    Article article;
     char input[512];
 
     //printf("Enter a supported command:\n");
@@ -202,6 +203,7 @@ void* sendThreadFun(void* arg)
         printf("enter command: leave, subscribe, unsubsribe, publish\n");
         scanf("%s", input);
 
+        //////////////////////////////////////// leave handler //////////////////////////////////////////
         if(strcmp("leave", input) == 0)
         {
             // grab rpc lock
@@ -212,10 +214,53 @@ void* sendThreadFun(void* arg)
             }
 
             // send leave message
-            if((ptr_result = leave_1(clnt)) == NULL)
+            if((ptr_result = leave_1(client_hostname, client_port, clnt)) == NULL)
             {
                 fprintf(stderr, "ERROR: Server failed to respond to LEAVE. Exiting...\n");
                 exit(EXIT_FAILURE);
+            }
+            // TODO - do anything here?
+
+            // release rpc lock
+            if(pthread_mutex_unlock(&lock_rpc) != 0)
+            {
+                fprintf(stderr, "ERROR: failed to unlock rpc mutex: %s. Exiting...", strerror(errno));
+                exit(EXIT_FAILURE);
+            }
+
+            // terminate program since client has left group server
+            printf("Client has left group server. Good bye\n");
+            exit(EXIT_SUCCESS);
+        }
+        ///////////////////////////////////// subscribe handler ////////////////////////////////////////
+        else if(strcmp("subscribe", input) == 0)
+        {
+            printf("enter subscribe article: <type>;<originator>;<org>;\n");
+            scanf("%s", input);
+
+            // validate article
+            if(articleDecode(input, &article))
+            {
+                fprintf(stderr, "ERROR: Article format failed validation. Try again...\n");
+                continue;
+            }
+            
+            // grab rpc lock
+            if(pthread_mutex_lock(&lock_rpc) != 0)
+            {
+                fprintf(stderr, "ERROR: failed to lock rpc mutex: %s. Exiting...", strerror(errno));
+                exit(EXIT_FAILURE);
+            }
+
+            // send subscribe message
+            if((ptr_result = subscribe_1(client_hostname, client_port, input, clnt)) == NULL)
+            {
+                fprintf(stderr, "ERROR: Server failed to respond to SUBSCRIBE message. Exiting...\n");
+                exit(EXIT_FAILURE);
+            }
+            else if(*ptr_result)
+            {
+                fprintf(stderr, "Client subscribe request failed. Try again...\n");
             }
 
             // release rpc lock
@@ -224,10 +269,6 @@ void* sendThreadFun(void* arg)
                 fprintf(stderr, "ERROR: failed to unlock rpc mutex: %s. Exiting...", strerror(errno));
                 exit(EXIT_FAILURE);
             }
-        }
-        else if(strcmp("subscribe", input) == 0)
-        {
-            // TODO 
         }
         else if(strcmp("unsubsribe", input) == 0)
         {
@@ -239,7 +280,7 @@ void* sendThreadFun(void* arg)
         }
         else
         {
-            printf("Unrecognized command\n");
+            fprintf(stderr, "ERROR: Unrecognized command. Try again...\n");
         }
     }
 }

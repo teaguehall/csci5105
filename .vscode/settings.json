@@ -5,6 +5,14 @@
         "socket.h": "c",
         "cmath": "c",
         "complex": "c",
-        "communicate.h": "c"
+        "communicate.h": "c",
+        "array": "c",
+        "chrono": "c",
+        "istream": "c",
+        "ostream": "c",
+        "ratio": "c",
+        "tuple": "c",
+        "type_traits": "c",
+        "utility": "c"
     }
 }
