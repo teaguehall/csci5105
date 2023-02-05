@@ -40,26 +40,29 @@ int articleDecode(char* bytes, Article* output)
     memcpy(output->org, bytes + semicolon_2_pos + 1, semicolon_3_pos - semicolon_2_pos - 1);
     memcpy(output->contents, bytes + semicolon_3_pos + 1, strlen(bytes) - semicolon_3_pos - 1);
 
-    // validate type
-    if(strcmp(output->type, "Sports") == 0){}
-    else if(strcmp(output->type, "Lifestyle") == 0){}
-    else if(strcmp(output->type, "Entertainment") == 0){}
-    else if(strcmp(output->type, "Business") == 0){}
-    else if(strcmp(output->type, "Technology") == 0){}
-    else if(strcmp(output->type, "Science") == 0){}
-    else if(strcmp(output->type, "Politics") == 0){}
-    else if(strcmp(output->type, "Health") == 0){}
-    else
-    {
-        fprintf(stderr, "ERROR: Invalid type \"%s\" found in article.\n", output->type);
-        return 1;
-    }
-
     // make sure message has header information
-    if((output->type == NULL && output->originator == NULL && output->org == NULL))
+    if((output->type[0] == '\0' && output->originator[0] == '\0' && output->org[0] == '\0'))
     {
         fprintf(stderr, "ERROR: Article is missing type, originator, AND org\n");
         return 1;
+    }
+    
+    // validate message type (if it exists)
+    if(output->type[0] != '\0')
+    {
+        if(strcmp(output->type, "Sports") == 0){}
+        else if(strcmp(output->type, "Lifestyle") == 0){}
+        else if(strcmp(output->type, "Entertainment") == 0){}
+        else if(strcmp(output->type, "Business") == 0){}
+        else if(strcmp(output->type, "Technology") == 0){}
+        else if(strcmp(output->type, "Science") == 0){}
+        else if(strcmp(output->type, "Politics") == 0){}
+        else if(strcmp(output->type, "Health") == 0){}
+        else
+        {
+            fprintf(stderr, "ERROR: Invalid type \"%s\" found in article.\n", output->type);
+            return 1;
+        }
     }
 
     //// DEBUG

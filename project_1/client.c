@@ -248,9 +248,9 @@ void* sendThreadFun(void* arg)
             }
 
             // make sure message does not contain contents
-            if(article.contents != NULL)
+            if(article.contents[0] != '\0')
             {
-                fprintf(stderr, "ERROR: Subscribe article has non-null contents. Try again...\n");
+                fprintf(stderr, "ERROR: Subscribe article has non-null contents:%s. Try again...\n", article.contents);
                 continue;
             }
             
