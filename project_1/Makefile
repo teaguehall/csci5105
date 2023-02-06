@@ -10,7 +10,7 @@ rpcgen:
 	rpcgen -N communicate.x
 
 server.out: communicate.h communicate_xdr.c communicate_svc.c article.c article.h
-	gcc article.c server_routines.c communicate_xdr.c communicate_svc.c -lnsl -o server.out
+	gcc article.c server_routines.c communicate_xdr.c communicate_svc.c -lpthread -lnsl -o server.out
 
 client.out: communicate.h communicate_xdr.c communicate_clnt.c  article.c article.h
 	gcc article.c client.c communicate_xdr.c communicate_clnt.c -lpthread -o client.out
