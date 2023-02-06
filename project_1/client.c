@@ -167,19 +167,7 @@ int main(int argc, char* argv[])
         exit(EXIT_FAILURE);
     }   
 
-    // leave server
-    if((ptr_result = leave_1(client_hostname, client_port, clnt)) == NULL)
-    {
-        clnt_perror(clnt, "call failed");   
-    }
-    else if(*ptr_result)
-    {
-        fprintf(stderr, "Client failed to join group server. Exiting...\n");
-        exit(EXIT_FAILURE);
-    }
-
-    // destroy RPC client
-	clnt_destroy(clnt);
+    // done
     return 0; 
 }
 
@@ -340,31 +328,33 @@ void* pingThreadFun(void* arg)
 {
     int* ptr_result;
 
-    // ping indefinitely
-    while(1)
-    {
-        // grab rpc lock
-        if(pthread_mutex_lock(&lock_rpc) != 0)
-        {
-            fprintf(stderr, "ERROR: Ping thread failed to lock mutex: %s. Exiting...", strerror(errno));
-            exit(EXIT_FAILURE);
-        }
 
-        // send ping message
-        if((ptr_result = ping_1(clnt)) == NULL)
-        {
-            fprintf(stderr, "ERROR: Server failed to respond to PING. Exiting...\n");
-            exit(EXIT_FAILURE);
-        }
 
-        // release rpc lock
-        if(pthread_mutex_unlock(&lock_rpc) != 0)
-        {
-            fprintf(stderr, "ERROR: Ping thread failed to unlock mutex: %s. Exiting...", strerror(errno));
-            exit(EXIT_FAILURE);
-        }
-
-        // sleep for a bit
-        sleep(1);
-    }
+    //// ping indefinitely
+    //while(1)
+    //{
+    //    // grab rpc lock
+    //    if(pthread_mutex_lock(&lock_rpc) != 0)
+    //    {
+    //        fprintf(stderr, "ERROR: Ping thread failed to lock mutex: %s. Exiting...", strerror(errno));
+    //        exit(EXIT_FAILURE);
+    //    }
+//
+    //    // send ping message
+    //    if((ptr_result = ping_1(clnt)) == NULL)
+    //    {
+    //        fprintf(stderr, "ERROR: Server failed to respond to PING. Exiting...\n");
+    //        exit(EXIT_FAILURE);
+    //    }
+//
+    //    // release rpc lock
+    //    if(pthread_mutex_unlock(&lock_rpc) != 0)
+    //    {
+    //        fprintf(stderr, "ERROR: Ping thread failed to unlock mutex: %s. Exiting...", strerror(errno));
+    //        exit(EXIT_FAILURE);
+    //    }
+//
+    //    // sleep for a bit
+    //    sleep(1);
+    //}
 }

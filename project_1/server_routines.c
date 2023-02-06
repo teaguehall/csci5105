@@ -17,7 +17,7 @@ typedef struct ClientEntry
 ClientEntry client_list[MAXCLIENTS];
 
 int activeClientAdd(ClientEntry entry);
-int acitveClientRemove(ClientEntry entry);
+int activeClientRemove(ClientEntry entry);
 
 
 // timeout monitoring stuff
@@ -38,75 +38,47 @@ int *
 join_1_svc(char *ip, int port,  struct svc_req *rqstp)
 {
 	static int result;
+	static int timeout_thread_running = 0;
+	ClientEntry entry;
 	
 	// timeout monitoring thread will start when first client joins
-	static int start_timeout_thread = 1;
-	if(start_timeout_thread)
+	if(!timeout_thread_running)
 	{
 		if(pthread_create(&timeout_thread_id, NULL, timeoutThreadFun, NULL) == -1)
 		{
-			fprintf(stderr, "ERROR: Failed to spawn thread recvThreadFun: %s. Exiting...\n", strerror(errno));
+			fprintf(stderr, "ERROR: Failed to start timeout monitoring thread: %s. Exiting...\n", strerror(errno));
 			exit(EXIT_FAILURE);
 		}
 
-		start_timeout_thread = 0; 
+		timeout_thread_running = 1; 
 	}
 
-	if(pthread_mutex_lock(&lock_client_list) != 0)
-	{
-		fprintf(stderr, "ERROR: Server JOIN failed to lock mutex: %s. Exiting...", strerror(errno));
-        exit(EXIT_FAILURE);
-	}
+	// copy client name and port number
+	strncpy(entry.client_name, ip, sizeof(entry.client_name));
+	entry.client_name[sizeof(entry.client_name) - 1] = '\0'; // force null terminate
 
-	if(client_count < MAXCLIENTS) 
-	{
-		client_count++;
-		printf("JOIN: Client \"%s:%d\" successfully joined the group. Count at %d/%d clients\n", ip, port, client_count, MAXCLIENTS);
-		result = 0;
-	}
-	else
-	{
-		printf("JOIN: Client \"%s:%d\" failed to join group. Count full at %d/%d clients\n", ip, port, client_count, MAXCLIENTS);
-		result = 1;
-	}
+	entry.client_port = port;
 
-	if(pthread_mutex_unlock(&lock_client_list) != 0)
-	{
-		fprintf(stderr, "ERROR: Server JOIN failed to unlock mutex: %s. Exiting...", strerror(errno));
-        exit(EXIT_FAILURE);
-	}
-
+	// add client to active list
+	result = activeClientAdd(entry);
+	
 	return &result;
 }
 
 int *
 leave_1_svc(char *ip, int port,  struct svc_req *rqstp)
 {
+	ClientEntry entry;
 	static int result;
 
-	if(pthread_mutex_lock(&lock_client_list) != 0)
-	{
-		fprintf(stderr, "ERROR: Server LEAVE failed to lock mutex: %s. Exiting...", strerror(errno));
-        exit(EXIT_FAILURE);
-	}
+	// copy client name and port number
+	strncpy(entry.client_name, ip, sizeof(entry.client_name));
+	entry.client_name[sizeof(entry.client_name) - 1] = '\0'; // force null terminate
 
-	if(client_count > 0) 
-	{
-		client_count--;
-		printf("LEAVE: Client \"%s:%d\" successfully left the group. Count at %d/%d clients\n", ip, port, client_count, MAXCLIENTS);
-		result = 0;
-	}
-	else
-	{
-		printf("LEAVE: Client \"%s:%d\" failed to leave group. Count was already at %d/%d clients\n", ip, port, client_count, MAXCLIENTS);
-		result = 1;
-	}
+	entry.client_port = port;
 
-	if(pthread_mutex_unlock(&lock_client_list) != 0)
-	{
-		fprintf(stderr, "ERROR: Server LEAVE failed to unlock mutex: %s. Exiting...", strerror(errno));
-        exit(EXIT_FAILURE);
-	}
+	// add client to active list
+	result = activeClientRemove(entry);
 
 	return &result;
 }
@@ -174,7 +146,7 @@ int activeClientAdd(ClientEntry entry)
 
 		// increment 
 		client_count++;
-		fprintf(stderr, "Client %s:%d joined server. Server capacity at %d/%d clients\n", entry.client_name, entry.client_port, client_count, MAXCLIENTS);
+		printf("Client \"%s:%d\" joined server. Server capacity at %d/%d clients\n", entry.client_name, entry.client_port, client_count, MAXCLIENTS);
 	}
 	else
 	{
@@ -196,7 +168,7 @@ int activeClientAdd(ClientEntry entry)
 int activeClientRemove(ClientEntry entry)
 {
 	int error = 0; // assume success
-	int matched_pos = -1; 
+	int matched_pos = -1;
 	
 	// grab lock for client list
 	if(pthread_mutex_lock(&lock_client_list) != 0)
@@ -208,7 +180,7 @@ int activeClientRemove(ClientEntry entry)
 	// find position in list in which entry matches
 	for(int i = 0; i < client_count; i++)
 	{
-		if(entry.client_name == client_list[i].client_name && entry.client_port == client_list[i].client_port)
+		if(strcmp(entry.client_name, client_list[i].client_name) == 0 && entry.client_port == client_list[i].client_port)
 		{
 			matched_pos = i;
 			break;
@@ -223,28 +195,12 @@ int activeClientRemove(ClientEntry entry)
 		// move last element in list to the opened slot
 		memcpy(client_list + matched_pos, client_list + client_count, sizeof(entry));
 
-		fprintf(stderr, "Client %s:%d left server. Server capacity at %d/%d clients\n", entry.client_name, entry.client_port, client_count, MAXCLIENTS);
+		printf("Client \"%s:%d\" left server. Server capacity at %d/%d clients\n", entry.client_name, entry.client_port, client_count, MAXCLIENTS);
 	}
 	else
 	{
 		fprintf(stderr, "ERROR: Called activeClientRemove on client (%s:%d) which was not found in client list\n", entry.client_name, entry.client_port);
         return -1;
-	}
-
-	// add client to active list if room available
-	if(client_count < MAXCLIENTS)
-	{
-		// copy client into next available slot
-		memcpy(client_list + client_count, &entry, sizeof(entry));
-
-		// increment 
-		client_count++;
-		fprintf(stderr, "Client %s:%d successfully joined server. Server capacity at %d/%d clients\n", entry.client_name, entry.client_port, client_count, MAXCLIENTS);
-	}
-	else
-	{
-		fprintf(stderr, "ERROR: Client attempt join server that is already full at %d/%d clients\n", MAXCLIENTS, MAXCLIENTS);
-		error = -1;
 	}
 
 	// release lock for client list
@@ -257,19 +213,13 @@ int activeClientRemove(ClientEntry entry)
 	return error;
 }
 
-
-
-
-
-
-
 /// montitors clients who have not interacted with server for a certain timeout interval
 void* timeoutThreadFun(void* arg)
 {
-	printf("Timeout thread started\n");
-	while(1)
-	{
-		printf("Hello from timeout thread\n");
-		sleep(1);
-	}
+	//printf("Timeout thread started\n");
+	//while(1)
+	//{
+	//	printf("Hello from timeout thread\n");
+	//	sleep(1);
+	//}
 }
