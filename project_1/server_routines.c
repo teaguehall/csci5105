@@ -21,7 +21,7 @@ int activeClientRemove(ClientEntry entry);
 
 
 // timeout monitoring stuff
-#define TIMEOUT_INTERVAL_SEC	5
+#define TIMEOUT_DURATION_SEC		5
 pthread_mutex_t lock_timeout = PTHREAD_MUTEX_INITIALIZER;
 pthread_t timeout_thread_id;
 void* timeoutThreadFun(void* arg);
@@ -130,6 +130,9 @@ ping_1_svc(struct svc_req *rqstp)
 int activeClientAdd(ClientEntry entry)
 {
 	int error = 0; // assume success
+
+	// update last check-in time to current ime
+	time(&(entry.last_checkin_sec));
 	
 	// grab lock for client list
 	if(pthread_mutex_lock(&lock_client_list) != 0)
@@ -199,7 +202,7 @@ int activeClientRemove(ClientEntry entry)
 	}
 	else
 	{
-		fprintf(stderr, "ERROR: Called activeClientRemove on client (%s:%d) which was not found in client list\n", entry.client_name, entry.client_port);
+		fprintf(stderr, "WARN: Called activeClientRemove on client (%s:%d) which was not found in client list\n", entry.client_name, entry.client_port);
         return -1;
 	}
 
@@ -216,10 +219,51 @@ int activeClientRemove(ClientEntry entry)
 /// montitors clients who have not interacted with server for a certain timeout interval
 void* timeoutThreadFun(void* arg)
 {
-	//printf("Timeout thread started\n");
-	//while(1)
-	//{
-	//	printf("Hello from timeout thread\n");
-	//	sleep(1);
-	//}
+	ClientEntry timed_out_list[MAXCLIENTS];
+	int timed_out_count, i;
+	time_t curr_time;
+	
+	while(1)
+	{
+		timed_out_count = 0;
+		
+		// grab lock for client list
+		if(pthread_mutex_lock(&lock_client_list) != 0)
+		{
+			fprintf(stderr, "ERROR: Failed to grab mutex lock in timeout thread: %s", strerror(errno));
+			exit(EXIT_FAILURE);
+		}
+
+		// grab current time
+		time(&curr_time);
+
+		// check for timed out clients
+		for(i = 0; i < client_count; i++)
+		{
+			if((curr_time - client_list[i].last_checkin_sec) > TIMEOUT_DURATION_SEC)
+			{
+				strcpy(timed_out_list[timed_out_count].client_name, client_list[i].client_name);
+				timed_out_list[timed_out_count].client_port = client_list[i].client_port;
+
+				timed_out_count++;
+			}
+		}
+
+		// release lock for client list
+		if(pthread_mutex_unlock(&lock_client_list) != 0)
+		{
+			fprintf(stderr, "ERROR: Failed to release mutex lock in timeout thread: %s. Killing server", strerror(errno));
+			exit(EXIT_FAILURE);
+		}
+	
+		// remove timed out clients
+		for(i = 0; i < timed_out_count; i++)
+		{
+			printf("Client \"%s:%d\" timed out\n", timed_out_list[i].client_name, timed_out_list[i].client_port);
+			activeClientRemove(timed_out_list[i]);
+		}
+
+		// sleep until next check
+		sleep(1);
+	}
 }
