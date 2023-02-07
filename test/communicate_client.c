@@ -30,6 +30,8 @@ communicate_prog_1(char *host)
 	int publish_1_port;
 	char *publish_1_article;
 	int  *result_6;
+	char *ping_1_ip;
+	int ping_1_port;
 
 #ifndef	DEBUG
 	clnt = clnt_create (host, COMMUNICATE_PROG, COMMUNICATE_VERSION, "udp");
@@ -59,7 +61,7 @@ communicate_prog_1(char *host)
 	if (result_5 == (int *) NULL) {
 		clnt_perror (clnt, "call failed");
 	}
-	result_6 = ping_1(clnt);
+	result_6 = ping_1(ping_1_ip, ping_1_port, clnt);
 	if (result_6 == (int *) NULL) {
 		clnt_perror (clnt, "call failed");
 	}

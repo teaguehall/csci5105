@@ -120,9 +120,33 @@ publish_1_svc(char *ip, int port, char *article,  struct svc_req *rqstp)
 }
 
 int *
-ping_1_svc(struct svc_req *rqstp)
+ping_1_svc(char *ip, int port,  struct svc_req *rqstp)
 {
 	static int  result;
+
+	// grab lock for client list
+	if(pthread_mutex_lock(&lock_client_list) != 0)
+	{
+		fprintf(stderr, "ERROR: Failed to grab mutex lock in PING handler: %s", strerror(errno));
+        exit(EXIT_FAILURE);
+	}
+
+	// update timestamp if ping was received
+	for(int i = 0; i < client_count; i++)
+	{
+		if(strcmp(ip, client_list[i].client_name) == 0 && port == client_list[i].client_port)
+		{
+			time(&(client_list[i].last_checkin_sec));
+		}
+	}
+
+	// release lock for client list
+	if(pthread_mutex_unlock(&lock_client_list) != 0)
+	{
+		fprintf(stderr, "ERROR: Failed to release mutex lock in PING handler: %s", strerror(errno));
+        exit(EXIT_FAILURE);
+	}
+
 	return &result;
 }
 

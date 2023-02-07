@@ -47,6 +47,12 @@ struct publish_1_argument {
 };
 typedef struct publish_1_argument publish_1_argument;
 
+struct ping_1_argument {
+	char *ip;
+	int port;
+};
+typedef struct ping_1_argument ping_1_argument;
+
 #define COMMUNICATE_PROG 9999
 #define COMMUNICATE_VERSION 1
 
@@ -67,8 +73,8 @@ extern  int * unsubscribe_1_svc(char *, int , char *, struct svc_req *);
 extern  int * publish_1(char *, int , char *, CLIENT *);
 extern  int * publish_1_svc(char *, int , char *, struct svc_req *);
 #define ping 6
-extern  int * ping_1(CLIENT *);
-extern  int * ping_1_svc(struct svc_req *);
+extern  int * ping_1(char *, int , CLIENT *);
+extern  int * ping_1_svc(char *, int , struct svc_req *);
 extern int communicate_prog_1_freeresult (SVCXPRT *, xdrproc_t, caddr_t);
 
 #else /* K&R C */
@@ -101,6 +107,7 @@ extern  bool_t xdr_leave_1_argument (XDR *, leave_1_argument*);
 extern  bool_t xdr_subscribe_1_argument (XDR *, subscribe_1_argument*);
 extern  bool_t xdr_unsubscribe_1_argument (XDR *, unsubscribe_1_argument*);
 extern  bool_t xdr_publish_1_argument (XDR *, publish_1_argument*);
+extern  bool_t xdr_ping_1_argument (XDR *, ping_1_argument*);
 
 #else /* K&R C */
 extern bool_t xdr_join_1_argument ();
@@ -108,6 +115,7 @@ extern bool_t xdr_leave_1_argument ();
 extern bool_t xdr_subscribe_1_argument ();
 extern bool_t xdr_unsubscribe_1_argument ();
 extern bool_t xdr_publish_1_argument ();
+extern bool_t xdr_ping_1_argument ();
 
 #endif /* K&R C */
 

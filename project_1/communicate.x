@@ -9,6 +9,6 @@ program COMMUNICATE_PROG
         int subscribe(string ip, int port, string article) = 3;
         int unsubscribe(string ip, int port, string article) = 4;
         int publish(string ip, int port, string article) = 5;
-        int ping(void) = 6;
+        int ping(string ip, int port) = 6;
     } = 1;
 } = 9999;

@@ -47,9 +47,9 @@ _publish_1 (publish_1_argument *argp, struct svc_req *rqstp)
 }
 
 static int *
-_ping_1 (void  *argp, struct svc_req *rqstp)
+_ping_1 (ping_1_argument *argp, struct svc_req *rqstp)
 {
-	return (ping_1_svc(rqstp));
+	return (ping_1_svc(argp->ip, argp->port, rqstp));
 }
 
 static void
@@ -61,6 +61,7 @@ communicate_prog_1(struct svc_req *rqstp, register SVCXPRT *transp)
 		subscribe_1_argument subscribe_1_arg;
 		unsubscribe_1_argument unsubscribe_1_arg;
 		publish_1_argument publish_1_arg;
+		ping_1_argument ping_1_arg;
 	} argument;
 	char *result;
 	xdrproc_t _xdr_argument, _xdr_result;
@@ -102,7 +103,7 @@ communicate_prog_1(struct svc_req *rqstp, register SVCXPRT *transp)
 		break;
 
 	case ping:
-		_xdr_argument = (xdrproc_t) xdr_void;
+		_xdr_argument = (xdrproc_t) xdr_ping_1_argument;
 		_xdr_result = (xdrproc_t) xdr_int;
 		local = (char *(*)(char *, struct svc_req *)) _ping_1;
 		break;

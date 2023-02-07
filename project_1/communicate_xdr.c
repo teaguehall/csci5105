@@ -60,3 +60,13 @@ xdr_publish_1_argument (XDR *xdrs, publish_1_argument *objp)
 		 return FALSE;
 	return TRUE;
 }
+
+bool_t
+xdr_ping_1_argument (XDR *xdrs, ping_1_argument *objp)
+{
+	 if (!xdr_string (xdrs, &objp->ip, ~0))
+		 return FALSE;
+	 if (!xdr_int (xdrs, &objp->port))
+		 return FALSE;
+	return TRUE;
+}

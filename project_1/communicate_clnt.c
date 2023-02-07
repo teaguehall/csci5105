@@ -98,12 +98,15 @@ publish_1(char *ip, int port, char *article,  CLIENT *clnt)
 }
 
 int *
-ping_1(CLIENT *clnt)
+ping_1(char *ip, int port,  CLIENT *clnt)
 {
+	ping_1_argument arg;
 	static int clnt_res;
 
 	memset((char *)&clnt_res, 0, sizeof(clnt_res));
-	 if (clnt_call (clnt, ping, (xdrproc_t) xdr_void, (caddr_t) NULL,
+	arg.ip = ip;
+	arg.port = port;
+	if (clnt_call (clnt, ping, (xdrproc_t) xdr_ping_1_argument, (caddr_t) &arg,
 		(xdrproc_t) xdr_int, (caddr_t) &clnt_res,
 		TIMEOUT) != RPC_SUCCESS) {
 		return (NULL);

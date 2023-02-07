@@ -67,7 +67,7 @@ publish_1_svc(char *ip, int port, char *article,  struct svc_req *rqstp)
 }
 
 int *
-ping_1_svc(struct svc_req *rqstp)
+ping_1_svc(char *ip, int port,  struct svc_req *rqstp)
 {
 	static int  result;
 
