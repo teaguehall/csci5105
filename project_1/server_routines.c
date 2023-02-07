@@ -190,7 +190,7 @@ int subscriptionAddEntry(char* ip, int port, char* article_type, char* article_o
 	if(pthread_mutex_lock(&lock_subscription_list) != 0)
 	{
 		fprintf(stderr, "ERROR: Failed to grab mutex lock in subscriptionAddEntry: %s", strerror(errno));
-        return -1;
+		return -1;
 	}
 
 	// add client to active list if room available
@@ -220,6 +220,97 @@ int subscriptionAddEntry(char* ip, int port, char* article_type, char* article_o
 	}
 
 	return error;
+}
+
+// remove entry
+int subscriptionRemoveEntry(char* ip, int port, char* article_type, char* article_originator, char* article_org)
+{
+	int error = 0; // assume success
+	int matched_pos = -1;
+	
+	// grab lock for client list
+	if(pthread_mutex_lock(&lock_subscription_list) != 0)
+	{
+		fprintf(stderr, "ERROR: Failed to grab mutex lock in subscriptionRemoveEntry: %s", strerror(errno));
+        return -1;
+	}
+
+	// find position in list in which entry matches
+	for(int i = 0; i < subscription_count; i++)
+	{
+		if(
+			strcmp(ip, subscription_list[i].client_name) == 0 && 
+			port == subscription_list[i].client_port &&
+			strcmp(article_type, subscription_list[i].article_type) == 0 &&
+			strcmp(article_originator, subscription_list[i].article_originator) == 0 &&
+			strcmp(article_org, subscription_list[i].article_org) == 0
+		)
+		{
+			matched_pos = i;
+			break;
+		}
+	}
+
+	// update client list if match was previously found
+	if(matched_pos != -1)
+	{
+		subscription_count--;
+
+		// move last element in list to the opened slot
+		memcpy(subscription_list + matched_pos, subscription_list + subscription_count, sizeof(subscription_list[0]));
+	}
+	else
+	{
+		fprintf(stderr, "WARN: Attempted to unsubscribe from something in which no subscription existed\n");
+        return -1;
+	}
+
+	// release lock for client list
+	if(pthread_mutex_unlock(&lock_subscription_list) != 0)
+	{
+		fprintf(stderr, "ERROR: Failed to release mutex lock in subscriptionRemoveEntry: %s", strerror(errno));
+        return -1;
+	}
+
+	return error;
+}
+
+// remove all subscriptions associated with a client 
+int subscriptionRemoveClient(char* ip, int port)
+{
+	SubscriptionEntry matched_subscriptions[MAXSUBSCRIPTIONS];
+	int matches = 0;
+	int i;
+
+	// grab lock for client list
+	if(pthread_mutex_lock(&lock_subscription_list) != 0)
+	{
+		fprintf(stderr, "ERROR: Failed to grab mutex lock in subscriptionRemoveClient: %s", strerror(errno));
+		exit(EXIT_FAILURE);
+	}
+
+	// check for matching subscriptions
+	for(i = 0; i < subscription_count; i++)
+	{
+		if(strcmp(ip, subscription_list[i].client_name) == 0 && port == subscription_list[i].client_port)
+		{
+			memcpy(matched_subscriptions + matches, subscription_list + i, sizeof(SubscriptionEntry));
+			matches++;
+		}
+	}
+
+	// release lock for client list
+	if(pthread_mutex_unlock(&lock_subscription_list) != 0)
+	{
+		fprintf(stderr, "ERROR: Failed to release mutex lock in subscriptionRemoveClient: %s", strerror(errno));
+		exit(EXIT_FAILURE);
+	}
+
+	// remove matched subscriptions
+	for(i = 0; i < matches; i++)
+	{
+		subscriptionRemoveEntry(matched_subscriptions[i].client_name, matched_subscriptions[i].client_port, matched_subscriptions[i].article_type, matched_subscriptions[i].article_originator, matched_subscriptions[i].article_org);
+	}
 }
 
 // adds client to active list, return 0 on success, -1 on error
