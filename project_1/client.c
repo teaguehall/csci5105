@@ -208,7 +208,6 @@ void* sendThreadFun(void* arg)
                 fprintf(stderr, "ERROR: Server failed to respond to LEAVE. Exiting...\n");
                 exit(EXIT_FAILURE);
             }
-            // TODO - do anything here?
 
             // release rpc lock
             if(pthread_mutex_unlock(&lock_rpc) != 0)

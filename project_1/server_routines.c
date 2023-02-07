@@ -1,10 +1,11 @@
 #include "communicate.h"
+#include "article.h"
 #include <stdio.h>
 #include <pthread.h>
 #include <errno.h>
 #include <unistd.h>
 
-// active client stuff
+// client stuff
 #define MAXCLIENTS	4
 pthread_mutex_t lock_client_list = PTHREAD_MUTEX_INITIALIZER;
 int client_count = 0;
@@ -19,20 +20,29 @@ ClientEntry client_list[MAXCLIENTS];
 int activeClientAdd(ClientEntry entry);
 int activeClientRemove(ClientEntry entry);
 
-
 // timeout monitoring stuff
 #define TIMEOUT_DURATION_SEC		5
 pthread_mutex_t lock_timeout = PTHREAD_MUTEX_INITIALIZER;
 pthread_t timeout_thread_id;
 void* timeoutThreadFun(void* arg);
 
+// subscription stuff
+#define MAXSUBSCRIPTIONS	8
+pthread_mutex_t lock_subscription_list = PTHREAD_MUTEX_INITIALIZER;
+int subscription_count = 0;
+typedef struct SubscriptionEntry
+{
+	char client_name[120];
+	int client_port;
+	char article_type[ARTICLE_MAX_BYTES];
+    char article_originator[ARTICLE_MAX_BYTES];
+    char article_org[ARTICLE_MAX_BYTES];
+} SubscriptionEntry;
+SubscriptionEntry subscription_list[MAXSUBSCRIPTIONS];
 
-
-// subscription list
-
-
-// shared variables
-
+int subscriptionAddEntry(char* ip, int port, char* article_type, char* article_originator, char* article_org);
+int subscriptionRemoveEntry(char* ip, int port, char* article_type, char* article_originator, char* article_org);
+int subscriptionRemoveClient(char* ip, int port);
 
 int *
 join_1_svc(char *ip, int port,  struct svc_req *rqstp)
@@ -88,6 +98,27 @@ subscribe_1_svc(char *ip, int port, char *article,  struct svc_req *rqstp)
 {
 	static int  result;
 
+	Article object;
+
+	// validate received article
+	if(articleDecode(article, &object))
+	{
+		result = 1;
+		return &result;
+	}
+
+	// validate the contents are zero
+	if(object.contents[0] != '\0')
+    {
+        fprintf(stderr, "ERROR: Received subscribe request has non-null contents.\n");
+        result = 1;
+		return &result;
+    }
+
+	// insert 
+
+	// validate that is meets the subscribe requirements
+	
 	/*
 	 * insert server code here
 	 */
@@ -148,6 +179,47 @@ ping_1_svc(char *ip, int port,  struct svc_req *rqstp)
 	}
 
 	return &result;
+}
+
+// adds subscription to list
+int subscriptionAddEntry(char* ip, int port, char* article_type, char* article_originator, char* article_org)
+{
+	int error = 0; // assume success
+
+	// grab lock for client list
+	if(pthread_mutex_lock(&lock_subscription_list) != 0)
+	{
+		fprintf(stderr, "ERROR: Failed to grab mutex lock in subscriptionAddEntry: %s", strerror(errno));
+        return -1;
+	}
+
+	// add client to active list if room available
+	if(subscription_count < MAXSUBSCRIPTIONS)
+	{
+		// copy inputs to subscription list
+		strcpy(subscription_list[subscription_count].client_name, ip);
+		subscription_list[subscription_count].client_port = port;
+		strcpy(subscription_list[subscription_count].article_type, article_type);
+		strcpy(subscription_list[subscription_count].article_originator, article_originator);
+		strcpy(subscription_list[subscription_count].article_org, article_org);
+
+		// increment
+		subscription_count++;
+	}
+	else
+	{
+		fprintf(stderr, "ERROR: Attempted to add subscription when list already full at %d/%d subscriptions\n", MAXSUBSCRIPTIONS, MAXSUBSCRIPTIONS);
+		error = -1;
+	}
+
+	// release lock for client list
+	if(pthread_mutex_unlock(&lock_subscription_list) != 0)
+	{
+		fprintf(stderr, "ERROR: Failed to release mutex lock in subscriptionAddEntry: %s", strerror(errno));
+        return -1;
+	}
+
+	return error;
 }
 
 // adds client to active list, return 0 on success, -1 on error
