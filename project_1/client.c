@@ -24,6 +24,8 @@ CLIENT *clnt;
 char client_hostname[256];
 char client_addr[INET_ADDRSTRLEN];
 int client_port;
+int socket_fd;
+struct sockaddr_in cliaddr, servaddr;
 
 
 int main(int argc, char* argv[])
@@ -63,16 +65,13 @@ int main(int argc, char* argv[])
     }
 
     // Create RPC client
-    printf("Creating RPC client to for remote host: %s\n", group_server);  
+    printf("INFO: Creating RPC client for remote host: %s...\n", group_server);  
     clnt = clnt_create (group_server, COMMUNICATE_PROG, COMMUNICATE_VERSION, "udp");
     if (clnt == NULL) 
     {
         clnt_pcreateerror (group_server);
         exit (EXIT_FAILURE);
     }
-
-    int socket_fd;
-    struct sockaddr_in cliaddr, servaddr;
 
     memset(&servaddr, 0, sizeof(servaddr));
     memset(&cliaddr, 0, sizeof(cliaddr));
@@ -130,9 +129,9 @@ int main(int argc, char* argv[])
     pthread_t recv_thread_id;
     pthread_t ping_thread_id;
 
-    if(pthread_create(&send_thread_id, NULL, sendThreadFun, NULL) == -1)
+    if(pthread_create(&ping_thread_id, NULL, pingThreadFun, NULL) == -1)
     {
-        fprintf(stderr, "ERROR: Failed to spawn thread sendThreadFun: %s. Exiting...\n", strerror(errno));
+        fprintf(stderr, "ERROR: Failed to spawn thread pingThreadFun: %s. Exiting...\n", strerror(errno));
         exit(EXIT_FAILURE);
     }
 
@@ -142,9 +141,9 @@ int main(int argc, char* argv[])
         exit(EXIT_FAILURE);
     }
 
-    if(pthread_create(&ping_thread_id, NULL, pingThreadFun, NULL) == -1)
+    if(pthread_create(&send_thread_id, NULL, sendThreadFun, NULL) == -1)
     {
-        fprintf(stderr, "ERROR: Failed to spawn thread pingThreadFun: %s. Exiting...\n", strerror(errno));
+        fprintf(stderr, "ERROR: Failed to spawn thread sendThreadFun: %s. Exiting...\n", strerror(errno));
         exit(EXIT_FAILURE);
     }
 
@@ -177,13 +176,9 @@ void* sendThreadFun(void* arg)
     Article article;
     char input[512];
 
-    //printf("Enter a supported command:\n");
-    //printf("leave\n");
-    //printf("subscribe <type>;<originator>;<org>;\n");
-    //printf("unsubscribe <type>;<originator>;<org>;\n");
-    //printf("publish <type>;<originator>;<org>;<contents>\n");
+    printf("INFO: Starting user-input thread...\n");
 
-    // indefinitely 
+    // read user inputs indefinitely 
     while(1)
     {
         int* ptr_result;
@@ -341,7 +336,7 @@ void* sendThreadFun(void* arg)
             }
 
             // send unsubscribe message
-            if((ptr_result = unsubscribe_1(client_hostname, client_port, input, clnt)) == NULL)
+            if((ptr_result = publish_1(client_hostname, client_port, input, clnt)) == NULL)
             {
                 fprintf(stderr, "ERROR: Server failed to respond to UNSUBSCRIBE message. Exiting...\n");
                 exit(EXIT_FAILURE);
@@ -368,44 +363,32 @@ void* sendThreadFun(void* arg)
 // thread for recving articles
 void* recvThreadFun(void* arg)
 {
-    //// test
-    //printf("port number = %d\n", ntohs(cliaddr.sin_port));
-//
-//
-    //// grab host name and available port for UDP listening
-//
-    //// test
-    //char buffer[256];
-    //gethostname(buffer, sizeof(buffer));
-    //printf("hostname = %s\n", buffer);
-//
-    //// register to group server
-    //int* result = join_1("client #1", 64, clnt);
-	//if (result == (int *) NULL) {
-	//	clnt_perror (clnt, "call failed");
-	//}
+    socklen_t len;
+    static char rcvd_article[sizeof(Article)];
 
-    sleep(5);
+    len = sizeof(cliaddr);  //len is value/result
 
+    printf("INFO: Starting message receive thread...\n");
 
+    while(recvfrom(socket_fd, rcvd_article, sizeof(Article), MSG_WAITALL, ( struct sockaddr *) &cliaddr, &len) !=-1)
+    {
+        // ensure null termination
+        rcvd_article[sizeof(Article) - 1] = '\0';
 
+        // print received article
+        printf("Received article: %s\n", rcvd_article);
+    }
 
-
-
-
-
-
-
-
-
-
-
+    // will only get here if error occurs
+    fprintf(stderr, "ERROR: Failed receiving server message from socket: %s. Exiting...", strerror(errno));
 }
 
 // thread responsible for pringing RPC
 void* pingThreadFun(void* arg)
 {
     int* ptr_result;
+
+    printf("INFO: Starting ping thread...\n");
 
     // ping indefinitely
     while(1)

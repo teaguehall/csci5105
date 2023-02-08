@@ -15,6 +15,7 @@
         "type_traits": "c",
         "utility": "c",
         "unistd.h": "c",
-        "stdio.h": "c"
+        "stdio.h": "c",
+        "system_error": "c"
     }
 }

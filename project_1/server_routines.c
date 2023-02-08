@@ -513,8 +513,37 @@ int activeClientRemove(ClientEntry entry)
 /// send article to subsriber
 void sendArticle(char* client_name, int port, Article* ptr_article)
 {
-	// TODO
-	printf("article sent to: \"%s:%d\"\n", client_name, port);
+	static int socket_fd;
+	char message[1024];
+	
+	// create socket if first time sending message
+	static int create_socket = 1;
+	if(create_socket)
+	{
+		if((socket_fd = socket(AF_INET, SOCK_DGRAM, 0)) == -1 )
+		{
+			fprintf(stderr, "ERROR: Server failed to create socket: %s", strerror(errno));
+        	return;
+		}
+
+		create_socket = 0;  
+    }
+
+	struct sockaddr_in	 client_addr;
+
+	// create destination address
+	client_addr.sin_family = AF_INET;
+	client_addr.sin_port = htons(port);
+	client_addr.sin_addr.s_addr = INADDR_ANY;
+
+	// build and send message
+	sprintf(message, "Article Header: %s;%s;%s Contents: %s\n", ptr_article->type, ptr_article->originator, ptr_article->org, ptr_article->contents);
+
+	if(sendto(socket_fd, message, strlen(message), MSG_CONFIRM, (const struct sockaddr *) &client_addr, sizeof(client_addr)) == -1) 
+	{
+		fprintf(stderr, "ERROR: Server failed while attempt to send article: %s", strerror(errno));
+        return;
+	}
 }
 
 /// montitors clients who have not interacted with server for a certain timeout interval
