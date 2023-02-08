@@ -44,6 +44,10 @@ int subscriptionAddEntry(char* ip, int port, char* article_type, char* article_o
 int subscriptionRemoveEntry(char* ip, int port, char* article_type, char* article_originator, char* article_org);
 int subscriptionRemoveClient(char* ip, int port);
 
+// article sending stuff
+
+void sendArticle(char* client_name, int port, Article* ptr_article);
+
 int *
 join_1_svc(char *ip, int port,  struct svc_req *rqstp)
 {
@@ -115,14 +119,15 @@ subscribe_1_svc(char *ip, int port, char *article,  struct svc_req *rqstp)
 		return &result;
     }
 
-	// insert 
+	// insert subscription entry
+	if(subscriptionAddEntry(ip, port, object.type, object.originator, object.org))
+	{
+		result = 1;
+		return &result;
+	}
 
-	// validate that is meets the subscribe requirements
-	
-	/*
-	 * insert server code here
-	 */
-
+	// success
+	result = 0;
 	return &result;
 }
 
@@ -131,22 +136,118 @@ unsubscribe_1_svc(char *ip, int port, char *article,  struct svc_req *rqstp)
 {
 	static int  result;
 
-	/*
-	 * insert server code here
-	 */
+	Article object;
 
+	// validate received article
+	if(articleDecode(article, &object))
+	{
+		result = 1;
+		return &result;
+	}
+
+	// validate the contents are zero
+	if(object.contents[0] != '\0')
+    {
+        fprintf(stderr, "ERROR: Received subscribe request has non-null contents.\n");
+        result = 1;
+		return &result;
+    }
+
+	// insert subscription entry
+	if(subscriptionRemoveEntry(ip, port, object.type, object.originator, object.org))
+	{
+		result = 1;
+		return &result;
+	}
+
+	// success
+	result = 0;
 	return &result;
 }
 
 int *
 publish_1_svc(char *ip, int port, char *article,  struct svc_req *rqstp)
 {
+	char matched_client_names[MAXSUBSCRIPTIONS][120];
+	int matched_client_ports[MAXSUBSCRIPTIONS];
+	int matches = 0;
+	
 	static int  result;
 
-	/*
-	 * insert server code here
-	 */
+	Article published_article;
+	int i;
 
+	// validate received article
+	if(articleDecode(article, &published_article))
+	{
+		result = 1;
+		return &result;
+	}
+
+	// validate type present
+	if(published_article.type[0] == '\0')
+	{
+		fprintf(stderr, "ERROR: Server received published article without type\n");
+        result = 1;
+		return &result;
+	}
+
+	// validate originator present
+	if(published_article.originator[0] == '\0')
+	{
+		fprintf(stderr, "ERROR: Server received published article without originator\n");
+        result = 1;
+		return &result;
+	}
+
+	// validate org present
+	if(published_article.org[0] == '\0')
+	{
+		fprintf(stderr, "ERROR: Server received published article without org\n");
+        result = 1;
+		return &result;
+	}
+
+	// grab lock for subscriber list
+	if(pthread_mutex_lock(&lock_subscription_list) != 0)
+	{
+		fprintf(stderr, "ERROR: Failed to grab mutex lock in publish article received handler: %s", strerror(errno));
+		exit(EXIT_FAILURE);
+	}
+
+	// check for matching subscriptions
+	for(i = 0; i < subscription_count; i++)
+	{
+		// check for type, originator, and org matches (string length of zero indicates wild card and will automatically match)
+		if(strcmp(subscription_list[i].article_type, published_article.type) == 0 || strlen(subscription_list[i].article_type) == 0) 
+		{
+			if(strcmp(subscription_list[i].article_originator, published_article.originator) == 0 || strlen(subscription_list[i].article_originator) == 0) 
+			{
+				if(strcmp(subscription_list[i].article_org, published_article.org) == 0 || strlen(subscription_list[i].article_org) == 0) 
+				{
+					strcpy(matched_client_names[matches], subscription_list[i].client_name);
+					matched_client_ports[matches] = subscription_list[i].client_port;
+					matches++;
+				}
+			}
+		}
+	}
+
+	// release lock for client list
+	if(pthread_mutex_unlock(&lock_subscription_list) != 0)
+	{
+		fprintf(stderr, "ERROR: Failed to grab mutex lock in publish article received handler: %s", strerror(errno));
+		exit(EXIT_FAILURE);
+	}
+
+	// send out article to each match
+	for(i = 0; i < matches; i++)
+	{
+		sendArticle(matched_client_names[i], matched_client_ports[i], &published_article);
+	}
+
+	// success
+	result = 0;
 	return &result;
 }
 
@@ -203,6 +304,9 @@ int subscriptionAddEntry(char* ip, int port, char* article_type, char* article_o
 		strcpy(subscription_list[subscription_count].article_originator, article_originator);
 		strcpy(subscription_list[subscription_count].article_org, article_org);
 
+		// debug TODO delete
+		printf("subscription added: %s:%s:%s\n", article_type, article_originator, article_org);
+
 		// increment
 		subscription_count++;
 	}
@@ -258,6 +362,9 @@ int subscriptionRemoveEntry(char* ip, int port, char* article_type, char* articl
 
 		// move last element in list to the opened slot
 		memcpy(subscription_list + matched_pos, subscription_list + subscription_count, sizeof(subscription_list[0]));
+
+		// debug TODO delete
+		printf("subscription removed: %s:%s:%s\n", article_type, article_originator, article_org);
 	}
 	else
 	{
@@ -401,6 +508,13 @@ int activeClientRemove(ClientEntry entry)
 	}
 
 	return error;
+}
+
+/// send article to subsriber
+void sendArticle(char* client_name, int port, Article* ptr_article)
+{
+	// TODO
+	printf("article sent to: \"%s:%d\"\n", client_name, port);
 }
 
 /// montitors clients who have not interacted with server for a certain timeout interval

@@ -188,7 +188,7 @@ void* sendThreadFun(void* arg)
     {
         int* ptr_result;
         
-        printf("enter command: leave, subscribe, unsubsribe, publish\n");
+        printf("enter command: leave, subscribe, unsubscribe, publish\n");
         fgets(input, sizeof(input), stdin);
         input[strcspn(input, "\n")] = 0; // remove new line character
 
@@ -267,19 +267,99 @@ void* sendThreadFun(void* arg)
             }
         }
         //////////////////////////////////// unsubscribe handler ///////////////////////////////////////
-        else if(strcmp("unsubsribe", input) == 0)
+        else if(strcmp("unsubscribe", input) == 0)
         {
-            // TODO 
+            printf("enter unsubscribe article: <type>;<originator>;<org>;\n");
+            fgets(input, sizeof(input), stdin);
+            input[strcspn(input, "\n")] = 0; // remove new line character
+
+            // validate article
+            if(articleDecode(input, &article))
+            {
+                fprintf(stderr, "ERROR: Article format failed validation. Try again...\n");
+                continue;
+            }
+
+            // make sure message does not contain contents
+            if(article.contents[0] != '\0')
+            {
+                fprintf(stderr, "ERROR: Subscribe article has non-null contents:%s. Try again...\n", article.contents);
+                continue;
+            }
+            
+            // grab rpc lock
+            if(pthread_mutex_lock(&lock_rpc) != 0)
+            {
+                fprintf(stderr, "ERROR: failed to lock rpc mutex: %s. Exiting...", strerror(errno));
+                exit(EXIT_FAILURE);
+            }
+
+            // send unsubscribe message
+            if((ptr_result = unsubscribe_1(client_hostname, client_port, input, clnt)) == NULL)
+            {
+                fprintf(stderr, "ERROR: Server failed to respond to UNSUBSCRIBE message. Exiting...\n");
+                exit(EXIT_FAILURE);
+            }
+            else if(*ptr_result)
+            {
+                fprintf(stderr, "Client unsubscribe request failed. Try again...\n");
+            }
+
+            // release rpc lock
+            if(pthread_mutex_unlock(&lock_rpc) != 0)
+            {
+                fprintf(stderr, "ERROR: failed to unlock rpc mutex: %s. Exiting...", strerror(errno));
+                exit(EXIT_FAILURE);
+            }
         }
         ///////////////////////////////////// publish handler ////////////////////////////////////////
         else if(strcmp("publish", input) == 0)
         {
-            // TODO 
+            printf("enter publish article: <type>;<originator>;<org>;<contents>\n");
+            fgets(input, sizeof(input), stdin);
+            input[strcspn(input, "\n")] = 0; // remove new line character
+
+            // validate article
+            if(articleDecode(input, &article))
+            {
+                fprintf(stderr, "ERROR: Article format failed validation. Try again...\n");
+                continue;
+            }
+
+            // make sure message contains content
+            if(article.contents[0] == '\0')
+            {
+                fprintf(stderr, "ERROR: Published article has no contents:%s. Try again...\n", article.contents);
+                continue;
+            }
+            
+            // grab rpc lock
+            if(pthread_mutex_lock(&lock_rpc) != 0)
+            {
+                fprintf(stderr, "ERROR: failed to lock rpc mutex: %s. Exiting...", strerror(errno));
+                exit(EXIT_FAILURE);
+            }
+
+            // send unsubscribe message
+            if((ptr_result = unsubscribe_1(client_hostname, client_port, input, clnt)) == NULL)
+            {
+                fprintf(stderr, "ERROR: Server failed to respond to UNSUBSCRIBE message. Exiting...\n");
+                exit(EXIT_FAILURE);
+            }
+            else if(*ptr_result)
+            {
+                fprintf(stderr, "Client unsubscribe request failed. Try again...\n");
+            }
+
+            // release rpc lock
+            if(pthread_mutex_unlock(&lock_rpc) != 0)
+            {
+                fprintf(stderr, "ERROR: failed to unlock rpc mutex: %s. Exiting...", strerror(errno));
+                exit(EXIT_FAILURE);
+            }
         }
         else
         {
-            printf("hello printing: %s\n", input);
-            
             fprintf(stderr, "ERROR: Unrecognized command. Try again...\n");
         }
     }
