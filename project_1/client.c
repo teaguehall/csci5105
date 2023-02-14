@@ -27,6 +27,12 @@ int client_port;
 int socket_fd;
 struct sockaddr_in cliaddr, servaddr;
 
+// test variables
+Article test_article;
+int test_article_inputted;
+int test_unsubscribe_duration;
+int test_article_is_publisher;
+void testRoutine(void);
 
 int main(int argc, char* argv[])
 {
@@ -44,8 +50,7 @@ int main(int argc, char* argv[])
     char* group_server = argv[1];
 
     // save and validate test article
-    Article test_article;
-    int test_article_inputted = 0;
+    test_article_inputted = 0;
     if(argc > 2)
     {
         test_article_inputted = 1;
@@ -58,7 +63,7 @@ int main(int argc, char* argv[])
     }
 
     // save and validate unsubscribe duration
-    int test_unsubscribe_duration = 0;
+    test_unsubscribe_duration = 0;
     if(argc > 3)
     {
         test_unsubscribe_duration = atoi(argv[3]);
@@ -111,7 +116,7 @@ int main(int argc, char* argv[])
         client_port = ntohs(temp.sin_port);
     }
 
-    // send RCP-join message
+    // send RPC-join message
     int* ptr_result;
     if((ptr_result = join_1(client_hostname, client_port, clnt)) == NULL)
     {
@@ -175,14 +180,84 @@ void* sendThreadFun(void* arg)
 {
     Article article;
     char input[512];
+    int* ptr_result;
+
+    // if test parameters provided, execute them:
+    if(test_article_inputted)
+    {
+        // decode test article into object
+        if(articleDecode(input, &article))
+        {
+            fprintf(stderr, "ERROR: Provided test article failed validation. Exiting...\n");
+            exit(EXIT_FAILURE);;
+        }
+
+        // determine article type
+        if(article.contents[0] == '\0')
+        {
+            test_article_is_publisher  = 0; // subscriber article
+        }
+        else
+        {
+            test_article_is_publisher  = 1; // publisher article
+        }
+
+        // grab rpc lock 
+        if(pthread_mutex_lock(&lock_rpc) != 0)
+        {
+            fprintf(stderr, "ERROR: failed to lock rpc mutex: %s. Exiting...", strerror(errno));
+            exit(EXIT_FAILURE);
+        }
+
+        // send message depending on type
+        if(test_article_is_publisher)
+        {
+            if((ptr_result = publish_1(client_hostname, client_port, input, clnt)) == NULL)
+            {
+                fprintf(stderr, "ERROR: Server failed to respond to PUBLISH message. Exiting...\n");
+                exit(EXIT_FAILURE);
+            }
+            else if(*ptr_result)
+            {
+                fprintf(stderr, "Client publish request failed. Exiting...\n");
+                exit(EXIT_FAILURE);
+            }
+        }
+        else
+        {
+            if((ptr_result = subscribe_1(client_hostname, client_port, input, clnt)) == NULL)
+            {
+                fprintf(stderr, "ERROR: Server failed to respond to SUBSCRIBE message. Exiting...\n");
+                exit(EXIT_FAILURE);
+            }
+            else if(*ptr_result)
+            {
+                fprintf(stderr, "Client subscribe request failed. Exiting...\n");
+                exit(EXIT_FAILURE);
+            }
+        }
+
+        // release RPC lock
+        if(pthread_mutex_unlock(&lock_rpc) != 0)
+        {
+            fprintf(stderr, "ERROR: failed to unlock rpc mutex: %s. Exiting...", strerror(errno));
+            exit(EXIT_FAILURE);
+        }
+
+        // TODO check for unsubscribe duration
+
+    
+        printf( "INFO: Client finished testing. Exiting...\n");
+        exit(EXIT_SUCCESS);
+    }
+
+
 
     printf("INFO: Starting user-input thread...\n");
-
+    
     // read user inputs indefinitely 
     while(1)
     {
-        int* ptr_result;
-        
         printf("enter command: leave, subscribe, unsubscribe, publish\n");
         fgets(input, sizeof(input), stdin);
         input[strcspn(input, "\n")] = 0; // remove new line character
