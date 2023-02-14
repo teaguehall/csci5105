@@ -28,14 +28,13 @@ int socket_fd;
 struct sockaddr_in cliaddr, servaddr;
 
 // test variables
-Article test_article;
-int test_article_inputted;
-int test_unsubscribe_duration;
-int test_article_is_publisher;
-void testRoutine(void);
+void testRoutine(char* article_string, int unsubscribe_duration);
 
 int main(int argc, char* argv[])
 {
+    int test_article_inputted;
+    int test_unsubscribe_duration;
+    
     // validate input args
     if(argc < 2 || argc > 4)
     {
@@ -53,13 +52,7 @@ int main(int argc, char* argv[])
     test_article_inputted = 0;
     if(argc > 2)
     {
-        test_article_inputted = 1;
-        
-        if(articleDecode(argv[2], &test_article))
-        {
-            fprintf(stderr, "ERROR: Test article failed validdation");
-            exit(EXIT_FAILURE);
-        }        
+        test_article_inputted = 1;     
     }
 
     // save and validate unsubscribe duration
@@ -87,14 +80,14 @@ int main(int argc, char* argv[])
     // create listening socket
     if((socket_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
     {
-        fprintf(stderr, "ERROR: Client failed to create UDP listening socket: %s. Exiting...", strerror(errno));
+        fprintf(stderr, "ERROR: Client failed to create UDP listening socket: %s. Exiting...\n", strerror(errno));
         exit(EXIT_FAILURE);
     }
 
     // bind listening socket to available address/port
     if(bind(socket_fd, (const struct sockaddr *)&cliaddr, sizeof(cliaddr)) == -1)
     {
-        fprintf(stderr, "ERROR: Failed to bind socket to port: %s. Exiting...", strerror(errno));
+        fprintf(stderr, "ERROR: Failed to bind socket to port: %s. Exiting...\n", strerror(errno));
         exit(EXIT_FAILURE);
     }
 
@@ -108,7 +101,7 @@ int main(int argc, char* argv[])
 
     if (getsockname(socket_fd, (struct sockaddr *)&temp, &len) == -1)
     {
-        fprintf(stderr, "ERROR: Failed to identify listening port: %s. Exiting...", strerror(errno));
+        fprintf(stderr, "ERROR: Failed to identify listening port: %s. Exiting...\n", strerror(errno));
         exit(EXIT_FAILURE);
     }
     else
@@ -120,7 +113,7 @@ int main(int argc, char* argv[])
     int* ptr_result;
     if((ptr_result = join_1(client_hostname, client_port, clnt)) == NULL)
     {
-        clnt_perror(clnt, "RPC-JOIN failed. Exiting...");
+        clnt_perror(clnt, "RPC-JOIN failed. Is server running? Exiting...\n");
         exit(EXIT_FAILURE);
     }
     else if(*ptr_result)
@@ -128,28 +121,39 @@ int main(int argc, char* argv[])
         fprintf(stderr, "Client failed to join group server. Exiting...\n");
         exit(EXIT_FAILURE);
     }
-    
-    // spawn threads
+
     pthread_t send_thread_id;
     pthread_t recv_thread_id;
     pthread_t ping_thread_id;
 
+    // spawn ping thread
     if(pthread_create(&ping_thread_id, NULL, pingThreadFun, NULL) == -1)
     {
         fprintf(stderr, "ERROR: Failed to spawn thread pingThreadFun: %s. Exiting...\n", strerror(errno));
         exit(EXIT_FAILURE);
     }
 
+    // spawn receive thread
     if(pthread_create(&recv_thread_id, NULL, recvThreadFun, NULL) == -1)
     {
         fprintf(stderr, "ERROR: Failed to spawn thread recvThreadFun: %s. Exiting...\n", strerror(errno));
         exit(EXIT_FAILURE);
     }
 
-    if(pthread_create(&send_thread_id, NULL, sendThreadFun, NULL) == -1)
+    // spawn send thread if no test article was provided (otherwise run the test routine)
+    if(!test_article_inputted)
     {
-        fprintf(stderr, "ERROR: Failed to spawn thread sendThreadFun: %s. Exiting...\n", strerror(errno));
-        exit(EXIT_FAILURE);
+        if(pthread_create(&send_thread_id, NULL, sendThreadFun, NULL) == -1)
+        {
+            fprintf(stderr, "ERROR: Failed to spawn thread sendThreadFun: %s. Exiting...\n", strerror(errno));
+            exit(EXIT_FAILURE);
+        }
+    }
+    else
+    {
+        // run test routine and then terminate program
+        testRoutine(argv[2], test_unsubscribe_duration);  
+        exit(EXIT_SUCCESS);
     }
 
     // join threads
@@ -182,77 +186,6 @@ void* sendThreadFun(void* arg)
     char input[512];
     int* ptr_result;
 
-    // if test parameters provided, execute them:
-    if(test_article_inputted)
-    {
-        // decode test article into object
-        if(articleDecode(input, &article))
-        {
-            fprintf(stderr, "ERROR: Provided test article failed validation. Exiting...\n");
-            exit(EXIT_FAILURE);;
-        }
-
-        // determine article type
-        if(article.contents[0] == '\0')
-        {
-            test_article_is_publisher  = 0; // subscriber article
-        }
-        else
-        {
-            test_article_is_publisher  = 1; // publisher article
-        }
-
-        // grab rpc lock 
-        if(pthread_mutex_lock(&lock_rpc) != 0)
-        {
-            fprintf(stderr, "ERROR: failed to lock rpc mutex: %s. Exiting...", strerror(errno));
-            exit(EXIT_FAILURE);
-        }
-
-        // send message depending on type
-        if(test_article_is_publisher)
-        {
-            if((ptr_result = publish_1(client_hostname, client_port, input, clnt)) == NULL)
-            {
-                fprintf(stderr, "ERROR: Server failed to respond to PUBLISH message. Exiting...\n");
-                exit(EXIT_FAILURE);
-            }
-            else if(*ptr_result)
-            {
-                fprintf(stderr, "Client publish request failed. Exiting...\n");
-                exit(EXIT_FAILURE);
-            }
-        }
-        else
-        {
-            if((ptr_result = subscribe_1(client_hostname, client_port, input, clnt)) == NULL)
-            {
-                fprintf(stderr, "ERROR: Server failed to respond to SUBSCRIBE message. Exiting...\n");
-                exit(EXIT_FAILURE);
-            }
-            else if(*ptr_result)
-            {
-                fprintf(stderr, "Client subscribe request failed. Exiting...\n");
-                exit(EXIT_FAILURE);
-            }
-        }
-
-        // release RPC lock
-        if(pthread_mutex_unlock(&lock_rpc) != 0)
-        {
-            fprintf(stderr, "ERROR: failed to unlock rpc mutex: %s. Exiting...", strerror(errno));
-            exit(EXIT_FAILURE);
-        }
-
-        // TODO check for unsubscribe duration
-
-    
-        printf( "INFO: Client finished testing. Exiting...\n");
-        exit(EXIT_SUCCESS);
-    }
-
-
-
     printf("INFO: Starting user-input thread...\n");
     
     // read user inputs indefinitely 
@@ -268,7 +201,7 @@ void* sendThreadFun(void* arg)
             // grab rpc lock
             if(pthread_mutex_lock(&lock_rpc) != 0)
             {
-                fprintf(stderr, "ERROR: failed to lock rpc mutex: %s. Exiting...", strerror(errno));
+                fprintf(stderr, "ERROR: failed to lock rpc mutex: %s. Exiting...\n", strerror(errno));
                 exit(EXIT_FAILURE);
             }
 
@@ -282,7 +215,7 @@ void* sendThreadFun(void* arg)
             // release rpc lock
             if(pthread_mutex_unlock(&lock_rpc) != 0)
             {
-                fprintf(stderr, "ERROR: failed to unlock rpc mutex: %s. Exiting...", strerror(errno));
+                fprintf(stderr, "ERROR: failed to unlock rpc mutex: %s. Exiting...\n", strerror(errno));
                 exit(EXIT_FAILURE);
             }
 
@@ -314,7 +247,7 @@ void* sendThreadFun(void* arg)
             // grab rpc lock
             if(pthread_mutex_lock(&lock_rpc) != 0)
             {
-                fprintf(stderr, "ERROR: failed to lock rpc mutex: %s. Exiting...", strerror(errno));
+                fprintf(stderr, "ERROR: failed to lock rpc mutex: %s. Exiting...\n", strerror(errno));
                 exit(EXIT_FAILURE);
             }
 
@@ -332,7 +265,7 @@ void* sendThreadFun(void* arg)
             // release rpc lock
             if(pthread_mutex_unlock(&lock_rpc) != 0)
             {
-                fprintf(stderr, "ERROR: failed to unlock rpc mutex: %s. Exiting...", strerror(errno));
+                fprintf(stderr, "ERROR: failed to unlock rpc mutex: %s. Exiting...\n", strerror(errno));
                 exit(EXIT_FAILURE);
             }
         }
@@ -360,7 +293,7 @@ void* sendThreadFun(void* arg)
             // grab rpc lock
             if(pthread_mutex_lock(&lock_rpc) != 0)
             {
-                fprintf(stderr, "ERROR: failed to lock rpc mutex: %s. Exiting...", strerror(errno));
+                fprintf(stderr, "ERROR: failed to lock rpc mutex: %s. Exiting...\n", strerror(errno));
                 exit(EXIT_FAILURE);
             }
 
@@ -378,7 +311,7 @@ void* sendThreadFun(void* arg)
             // release rpc lock
             if(pthread_mutex_unlock(&lock_rpc) != 0)
             {
-                fprintf(stderr, "ERROR: failed to unlock rpc mutex: %s. Exiting...", strerror(errno));
+                fprintf(stderr, "ERROR: failed to unlock rpc mutex: %s. Exiting...\n", strerror(errno));
                 exit(EXIT_FAILURE);
             }
         }
@@ -406,7 +339,7 @@ void* sendThreadFun(void* arg)
             // grab rpc lock
             if(pthread_mutex_lock(&lock_rpc) != 0)
             {
-                fprintf(stderr, "ERROR: failed to lock rpc mutex: %s. Exiting...", strerror(errno));
+                fprintf(stderr, "ERROR: failed to lock rpc mutex: %s. Exiting...\n", strerror(errno));
                 exit(EXIT_FAILURE);
             }
 
@@ -424,7 +357,7 @@ void* sendThreadFun(void* arg)
             // release rpc lock
             if(pthread_mutex_unlock(&lock_rpc) != 0)
             {
-                fprintf(stderr, "ERROR: failed to unlock rpc mutex: %s. Exiting...", strerror(errno));
+                fprintf(stderr, "ERROR: failed to unlock rpc mutex: %s. Exiting...\n", strerror(errno));
                 exit(EXIT_FAILURE);
             }
         }
@@ -455,10 +388,10 @@ void* recvThreadFun(void* arg)
     }
 
     // will only get here if error occurs
-    fprintf(stderr, "ERROR: Failed receiving server message from socket: %s. Exiting...", strerror(errno));
+    fprintf(stderr, "ERROR: Failed receiving server message from socket: %s. Exiting...\n", strerror(errno));
 }
 
-// thread responsible for pringing RPC
+// thread responsible for pinging RPC
 void* pingThreadFun(void* arg)
 {
     int* ptr_result;
@@ -471,7 +404,7 @@ void* pingThreadFun(void* arg)
         // grab rpc lock
         if(pthread_mutex_lock(&lock_rpc) != 0)
         {
-            fprintf(stderr, "ERROR: Ping thread failed to lock mutex: %s. Exiting...", strerror(errno));
+            fprintf(stderr, "ERROR: Ping thread failed to lock mutex: %s. Exiting...\n", strerror(errno));
             exit(EXIT_FAILURE);
         }
 
@@ -485,11 +418,107 @@ void* pingThreadFun(void* arg)
         // release rpc lock
         if(pthread_mutex_unlock(&lock_rpc) != 0)
         {
-            fprintf(stderr, "ERROR: Ping thread failed to unlock mutex: %s. Exiting...", strerror(errno));
+            fprintf(stderr, "ERROR: Ping thread failed to unlock mutex: %s. Exiting...\n", strerror(errno));
             exit(EXIT_FAILURE);
         }
 
         // sleep for a bit
         sleep(1);
+    }
+}
+
+void testRoutine(char* article_string, int unsubscribe_duration)
+{
+    Article test_article;
+    int test_article_is_publisher;
+    int* ptr_result;
+    
+    // decode test article into object
+    if(articleDecode(article_string, &test_article))
+    {
+        fprintf(stderr, "ERROR: Provided test article failed validation. Exiting...\n");
+        return;
+    }   
+    // determine article type
+    if(test_article.contents[0] == '\0')
+    {
+        test_article_is_publisher  = 0; // subscriber article
+    }
+    else
+    {
+        test_article_is_publisher  = 1; // publisher article
+    }   
+    // grab rpc lock 
+    if(pthread_mutex_lock(&lock_rpc) != 0)
+    {
+        fprintf(stderr, "ERROR: failed to lock rpc mutex: %s. Exiting...\n", strerror(errno));
+        return;
+    }   
+    // send message depending on type
+    if(test_article_is_publisher)
+    {
+        if((ptr_result = publish_1(client_hostname, client_port, article_string, clnt)) == NULL)
+        {
+            fprintf(stderr, "ERROR: Server failed to respond to PUBLISH message. Exiting...\n");
+            return;
+        }
+        else if(*ptr_result)
+        {
+            fprintf(stderr, "Client publish request failed. Exiting...\n");
+            return;
+        }
+    }
+    else
+    {
+        if((ptr_result = subscribe_1(client_hostname, client_port, article_string, clnt)) == NULL)
+        {
+            fprintf(stderr, "ERROR: Server failed to respond to SUBSCRIBE message. Exiting...\n");
+            return;
+        }
+        else if(*ptr_result)
+        {
+            fprintf(stderr, "Client subscribe request failed. Exiting...\n");
+            return;
+        }
+    }   
+    // release RPC lock
+    if(pthread_mutex_unlock(&lock_rpc) != 0)
+    {
+        fprintf(stderr, "ERROR: failed to unlock rpc mutex: %s. Exiting...\n", strerror(errno));
+        return;
+    }   
+    // sleep and send unsubsubscribe message
+    if(unsubscribe_duration > 0)
+    {
+        // throw error if trying to send unsubscribe message if the provided message was a published message
+        if(test_article_is_publisher)
+        {
+            fprintf(stderr, "ERROR: Attempted to unsubscribe after a publish test message was provided. Exiting...\n");
+            return;
+        }   
+        // sleep 
+        sleep(unsubscribe_duration);   
+        // grab rpc lock
+        if(pthread_mutex_lock(&lock_rpc) != 0)
+        {
+            fprintf(stderr, "ERROR: failed to lock rpc mutex: %s. Exiting...\n", strerror(errno));
+            return;
+        }   
+        // send unsubscribe message
+        if((ptr_result = unsubscribe_1(client_hostname, client_port, article_string, clnt)) == NULL)
+        {
+            fprintf(stderr, "ERROR: Server failed to respond to UNSUBSCRIBE message. Exiting...\n");
+            return;
+        }
+        else if(*ptr_result)
+        {
+            fprintf(stderr, "Client unsubscribe request failed. Try again...\n");
+        }   
+        // release rpc lock
+        if(pthread_mutex_unlock(&lock_rpc) != 0)
+        {
+            fprintf(stderr, "ERROR: failed to unlock rpc mutex: %s. Exiting...\n", strerror(errno));
+            return;
+        }   
     }
 }

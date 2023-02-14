@@ -537,7 +537,7 @@ void sendArticle(char* client_name, int port, Article* ptr_article)
 	client_addr.sin_addr.s_addr = INADDR_ANY;
 
 	// build and send message
-	sprintf(message, "Article Header: %s;%s;%s Contents: %s\n", ptr_article->type, ptr_article->originator, ptr_article->org, ptr_article->contents);
+	sprintf(message, "From: %s;%s;%s Message: %s\n", ptr_article->type, ptr_article->originator, ptr_article->org, ptr_article->contents);
 
 	if(sendto(socket_fd, message, strlen(message), MSG_CONFIRM, (const struct sockaddr *) &client_addr, sizeof(client_addr)) == -1) 
 	{
