@@ -79,6 +79,39 @@ case $TEST_CASE in
     
     ;;
 
+  6)
+    ./server.out &
+    sleep 1
+ 
+    ./client.out 127.0.0.1 "Sports;Tom;ESPN;" 20 & # subscriber 1
+    ./client.out 127.0.0.1 "Sports;Tom;ESPN;" 20 & # subscriber 2
+    sleep 1
+
+    ./client.out 127.0.0.1 "Sports;Tom;ESPN;Hello this is Tom from ESPN!" & # publisher
+    sleep 1
+
+    pkill -P $$ # cleanup - kill all child processes
+    
+    ;;
+
+  7)
+    ./server.out &
+    sleep 1
+ 
+    ./client.out 127.0.0.1 "Sports;Tom;ESPN;" 5 & # subscriber 1
+    ./client.out 127.0.0.1 "Sports;Tom;ESPN;" 20 & # subscriber 2
+    sleep 1
+
+    ./client.out 127.0.0.1 "Sports;Tom;ESPN;Hello this is Tom from ESPN!" & # message will be receieved by both subscribers
+    sleep 10
+
+    ./client.out 127.0.0.1 "Sports;Tom;ESPN;Hello this is Tom from ESPN!" & # message will be received by only one subscriber (since first one has since unsubscribed)
+    sleep 1
+
+    pkill -P $$ # cleanup - kill all child processes
+    
+    ;;
+
   *)
     echo -n "Unrecognized test case"
     ;;
