@@ -1,6 +1,6 @@
 Background: The majority of user code is featured in client.c, server_routines.c, and article.c. The rest of the source code files were automatically generated from communicate.x using RPCGEN.
 
-Build Instructions: Run 'make' on the provided Makefile. 
+Build Instructions: Run 'make' on the provided Makefile. Two executables will be created: client.out and server.out
 
 Quick Start: Start up an instance of server.out on a lab machine. Start up an instance of client.out on the same or different lab machine with the server machine as an input argument. The client application will prompt you for user input commands.
 

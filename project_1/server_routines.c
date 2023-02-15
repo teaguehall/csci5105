@@ -4,6 +4,12 @@
 #include <pthread.h>
 #include <errno.h>
 #include <unistd.h>
+#include <arpa/inet.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <netdb.h>
+#include <arpa/inet.h>
 
 // client stuff
 #define MAXCLIENTS	4
@@ -510,6 +516,31 @@ int activeClientRemove(ClientEntry entry)
 	return error;
 }
 
+char* getIpFromHostname(char* hostname)
+{
+	static char ip_addr[255];
+	
+	struct in_addr **addr_list;
+	struct hostent *entry;
+	int i;
+		
+	if((entry = gethostbyname(hostname)) == NULL) 
+	{
+		return NULL; // error
+	}
+
+	addr_list = (struct in_addr **)entry->h_addr_list;
+	
+	for(i = 0; addr_list[i] != NULL; i++) 
+	{
+		strcpy(ip_addr , inet_ntoa(*addr_list[i]) );
+		return ip_addr;
+	}
+	
+	// error
+	return NULL;
+}
+
 /// send article to subsriber
 void sendArticle(char* client_name, int port, Article* ptr_article)
 {
@@ -534,7 +565,14 @@ void sendArticle(char* client_name, int port, Article* ptr_article)
 	// create destination address
 	client_addr.sin_family = AF_INET;
 	client_addr.sin_port = htons(port);
-	client_addr.sin_addr.s_addr = INADDR_ANY;
+
+	if(getIpFromHostname(client_name) == NULL)
+	{
+		fprintf(stderr, "WARN: Failed to resolve IP address from client name %s\n", client_name);
+		return;
+	}
+
+	client_addr.sin_addr.s_addr = inet_addr(getIpFromHostname(client_name));
 
 	// build and send message
 	sprintf(message, "From: %s;%s;%s Message: %s", ptr_article->type, ptr_article->originator, ptr_article->org, ptr_article->contents);
