@@ -14,7 +14,4 @@ server.out: communicate.h communicate_xdr.c communicate_svc.c article.c article.
 
 client.out: communicate.h communicate_xdr.c communicate_clnt.c  article.c article.h
 	gcc article.c client.c communicate_xdr.c communicate_clnt.c -lpthread -o client.out
-
-.PHONY: test
-test:
 	
