@@ -1,6 +1,8 @@
+*.out
+*.o
+
+# project 1 specific
 comms_clnt.c
 comms_svc.c
 comms_xdr.c
 comms.h
-*.out
-*.o
