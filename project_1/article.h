@@ -8,6 +8,8 @@
 
 #define ARTICLE_MAX_BYTES 120
 
+
+
 typedef struct Article {
     
     char type[ARTICLE_MAX_BYTES];
