@@ -3,9 +3,25 @@
 #include <string.h>
 #include "article.h"
 #include "client_net.h"
+#include "msg.h"
+
+#include <stdint.h>
+#include <arpa/inet.h>
 
 int main(int argc, char * argv[])
 {
+    //  DEBUG TODO REMOVE AFTER TESTING
+    char raw_msg[2048];
+    char send_err[256] = "This is a test error";
+    char recv_err[256];
+
+    msg_Build_ErrorResponse(raw_msg, send_err);
+    msg_Parse_ErrorResponse(raw_msg, recv_err);
+
+    printf("RECEIVED MESSAGE: %s\n", recv_err);
+    return 0;
+    
+    
     ConnectInfo connect_info;
     
     char command[1024];
