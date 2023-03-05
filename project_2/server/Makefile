@@ -1,6 +1,6 @@
 CC						:= gcc 
 CFLAGS					:= -Wall -Werror -g -O
-OUT						:= ../client.out
+OUT						:= ../server.out
 SRCS					:= $(wildcard ./*.c)
 OBJS					:= $(patsubst ./%.c,./%.o,$(SRCS))
 STATIC_LIBS				+= ../shared/libshared.a

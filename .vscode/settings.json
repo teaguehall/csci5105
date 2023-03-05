@@ -16,6 +16,8 @@
         "utility": "c",
         "unistd.h": "c",
         "stdio.h": "c",
-        "system_error": "c"
+        "system_error": "c",
+        "msg.h": "c",
+        "client_net.h": "c"
     }
 }

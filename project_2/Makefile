@@ -1,4 +1,4 @@
-.PHONY all clean
+.PHONY: all clean
 
 all:
 	$(MAKE) -C shared
@@ -10,4 +10,3 @@ clean:
 	$(MAKE) clean -C shared
 	$(MAKE) clean -C server
 	$(MAKE) clean -C client
-	

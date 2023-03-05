@@ -1,28 +1,33 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "article.h"
-#include "client_net.h"
-#include "msg.h"
+#include <errno.h>
+
+#include "net.h"
+#include "render.h"
+#include "../shared/msg.h"
+#include "../shared/article.h"
 
 #include <stdint.h>
 #include <arpa/inet.h>
 
 int main(int argc, char * argv[])
 {
-    //  DEBUG TODO REMOVE AFTER TESTING
-    char raw_msg[2048];
-    char send_err[256] = "This is a test error";
-    char recv_err[256];
+    Article article;
 
-    msg_Build_ErrorResponse(raw_msg, send_err);
-    msg_Parse_ErrorResponse(raw_msg, recv_err);
-
-    printf("RECEIVED MESSAGE: %s\n", recv_err);
-    return 0;
+    strcpy(article.title, "Help Wanted!");
+    strcpy(article.author, "Benjamin J.");
+    strcpy(article.contents, "Hello there, my name is Benjamin. This is an interesting way to type articles. I arbitrarily chose line count of 50 for new lines to occurs. However, who knows if it will be sufficient.");
+    article.id = 77;
+    article.parent_id = 0;
     
     
-    ConnectInfo connect_info;
+    //  DEBUG TODO REMOVE AFTER TESTING  
+    render_Article(article);
+    return 1;
+
+
+    ServerInfo connect_info;
     
     char command[1024];
     int semicolon_count;
@@ -30,7 +35,7 @@ int main(int argc, char * argv[])
     int semicolon_2_pos;
     int i; 
 
-    int article_id;
+    //int article_id;
     char article_title[ARTICLE_MAX_TITLE];
     char article_contents[ARTICLE_MAX_CONTENTS];
 
@@ -49,7 +54,7 @@ int main(int argc, char * argv[])
     }
 
     // validate connection info
-    strcpy(connect_info.hostname, "127.0.0.1"); // TODO read in arg
+    strcpy(connect_info.address, "127.0.0.1"); // TODO read in arg
     connect_info.port = 5555; // TODO read in arg
 
 
@@ -70,7 +75,14 @@ int main(int argc, char * argv[])
         
         // read user input
         printf("Enter command: POST, READ, CHOOSE, or REPLY\n");
-        fgets(command, sizeof(command), stdin);
+        
+        
+        if(fgets(command, sizeof(command), stdin) == NULL)
+        {
+            fprintf(stderr, "ERROR: fgets call failed with error \"%s\"\n", strerror(errno));
+            exit(EXIT_FAILURE);
+        }
+
         command[strcspn(command, "\n")] = 0; // remove new line character
 
         // handle user input
@@ -102,7 +114,7 @@ int main(int argc, char * argv[])
             memcpy(article_contents, command + semicolon_2_pos + 1, strlen(command) - semicolon_2_pos - 1);
 
             // post article to server
-            if(clientNet_Post(connect_info, argv[3], article_title, article_contents))
+            if(net_Post(connect_info, argv[3], article_title, article_contents))
             {
                 fprintf(stderr, "ERROR: Client failed POST article\n");
             }
