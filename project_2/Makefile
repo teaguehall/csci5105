@@ -1,14 +1,13 @@
-all: clean server.out client.out
+.PHONY all clean
 
-.PHONY: clean
+all:
+	$(MAKE) -C shared
+	$(MAKE) -C server
+	$(MAKE) -C client
+
 clean:
-	rm -f client.out server.out
-
-client.out: client.c client_net.c client_net.h msg.c msg.h
-	gcc client.c client_net.c msg.c -lpthread -o client.out
-
-server.out: server.c
-	gcc server.c -lpthread -o server.out
-
-
+	rm -f ./*.out
+	$(MAKE) clean -C shared
+	$(MAKE) clean -C server
+	$(MAKE) clean -C client
 	
