@@ -18,6 +18,8 @@
         "stdio.h": "c",
         "system_error": "c",
         "msg.h": "c",
-        "client_net.h": "c"
+        "client_net.h": "c",
+        "list": "c",
+        "thread": "c"
     }
 }

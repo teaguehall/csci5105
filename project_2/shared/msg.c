@@ -210,6 +210,10 @@ int msg_Build_ReadResponse(char* out_msg, int article_count, Article articles[])
         *(uint32_t*)(out_msg + MSG_HEADER_OFFSET + bytes_written) = htonl(articles[i].parent_id);
         bytes_written += 4;
 
+        // write article depth
+        *(uint32_t*)(out_msg + MSG_HEADER_OFFSET + bytes_written) = htonl(articles[i].depth);
+        bytes_written += 4;
+
         // write article author
         strcpy(out_msg + MSG_HEADER_OFFSET + bytes_written, articles[i].author);
         bytes_written += strlen(articles[i].author) + 1;
@@ -264,6 +268,10 @@ int msg_Parse_ReadResponse(char* in_msg, uint32_t* out_article_count, Article ou
 
         // parse out parent article ID
         out_articles[i].parent_id = ntohl(*(uint32_t*)(in_msg + MSG_HEADER_OFFSET + bytes_read));
+        bytes_read += 4;
+
+        // parse out article depth
+        out_articles[i].depth = ntohl(*(uint32_t*)(in_msg + MSG_HEADER_OFFSET + bytes_read));
         bytes_read += 4;
 
         // parse out article author
@@ -340,6 +348,10 @@ int msg_Build_ChooseResponse(char* out_msg, Article article)
     *(uint32_t*)(out_msg + MSG_HEADER_OFFSET + bytes_written) = htonl(article.parent_id);
     bytes_written += 4;
 
+    // write article depth
+    *(uint32_t*)(out_msg + MSG_HEADER_OFFSET + bytes_written) = htonl(article.depth);
+    bytes_written += 4;
+
     // write article author
     strcpy(out_msg + MSG_HEADER_OFFSET + bytes_written, article.author);
     bytes_written += strlen(article.author) + 1;
@@ -386,6 +398,10 @@ int msg_Parse_ChooseResponse(char* in_msg, Article* out_article)
     // parse out parent article ID
     out_article->parent_id = ntohl(*(uint32_t*)(in_msg + MSG_HEADER_OFFSET + bytes_read));
     bytes_read += 4;    
+
+    // parse out parent article depth
+    out_article->depth = ntohl(*(uint32_t*)(in_msg + MSG_HEADER_OFFSET + bytes_read));
+    bytes_read += 4; 
 
     // parse out article author
     strcpy(out_article->author, in_msg + MSG_HEADER_OFFSET + bytes_read);

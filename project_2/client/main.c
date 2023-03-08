@@ -13,17 +13,53 @@
 
 int main(int argc, char * argv[])
 {
-    Article article;
+    Article articles[2];
 
-    strcpy(article.title, "Help Wanted!");
-    strcpy(article.author, "Benjamin J.");
-    strcpy(article.contents, "Hello there, my name is Benjamin. This is an interesting way to type articles. I arbitrarily chose line count of 50 for new lines to occurs. However, who knows if it will be sufficient.");
-    article.id = 77;
-    article.parent_id = 0;
+    strcpy(articles[0].title, "Help Wanted!");
+    strcpy(articles[0].author, "Benjamin J.");
+    strcpy(articles[0].contents, "Hello there, my name is Benjamin. This is an interesting way to type articles. I arbitrarily chose line count of 50 for new lines to occurs. However, who knows if it will be sufficient.");
+    articles[0].id = 77;
+    articles[0].depth = 0;
+    articles[0].parent_id = 0;
+
+    strcpy(articles[1].title, "RE: Help Wanted!");
+    strcpy(articles[1].author, "Joe T.");
+    strcpy(articles[1].contents, "I would be willing to help.");
+    articles[1].id = 78;
+    articles[1].parent_id = 77;
+    articles[1].depth = 1;
     
     
     //  DEBUG TODO REMOVE AFTER TESTING  
-    render_Article(article);
+    int page = 1;
+    int total_pages = 2;
+    int cmd;
+
+    while(1)
+    {
+        render_List(page, total_pages, 2, articles);
+        cmd = getchar();
+
+        if(cmd == 37)
+        {
+            if(page > 2) page--;
+        }
+        else if((cmd == 39))
+        {
+            if(page < total_pages) page++;
+        }
+        else if(cmd == 'x')
+        {
+            break;
+        }
+        else
+        {
+            printf("%c\n", cmd);
+            return 1;
+        }
+    }
+
+    render_List(1, 2, 2, articles);
     return 1;
 
 
@@ -73,7 +109,9 @@ int main(int argc, char * argv[])
     {
         semicolon_count = 0;
         
-        // read user input
+        /////////////////////////////////////////////////////////////////////////////////////////////////////
+        ///////////////////////////////////////// GET USER INPUT ////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////////////
         printf("Enter command: POST, READ, CHOOSE, or REPLY\n");
         
         
@@ -85,7 +123,9 @@ int main(int argc, char * argv[])
 
         command[strcspn(command, "\n")] = 0; // remove new line character
 
-        // handle user input
+        /////////////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////// POST HANDLER  ///////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////////////
         if(strncmp(command, "POST", 4) == 0)
         {
             // find semi-colon locations in "POST;<title>;<contents>"
@@ -124,14 +164,26 @@ int main(int argc, char * argv[])
             }
 
         }
+
+        /////////////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////// READ HANDLER  ///////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////////////
         else if(strncmp(command, "READ", sizeof("READ")) == 0)
         {
             // TODO
         }
+
+        /////////////////////////////////////////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////// CHOOSE HANDLER  //////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////////////
         else if(strncmp(command, "CHOOSE", sizeof("CHOOSE")) == 0)
         {
             // TODO
         }
+
+        /////////////////////////////////////////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////// REPLY HANDLER  ///////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////////////
         else if(strncmp(command, "REPLY", sizeof("REPLY")) == 0)
         {
             // TODO

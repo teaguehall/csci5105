@@ -48,8 +48,37 @@ int render_Article(Article article)
 }
 
 // formats a list of article outputs to the terminal
-int render_List(Article articles[])
+int render_List(int page, int total_pages, int article_count, Article articles[])
 {
+    // clear terminal
+    if(system("clear") == -1)
+    {
+        fprintf(stderr, "ERROR: Failed to clear terminal during article rendering: %s\n", strerror(errno));
+        return -1;
+    }
+
+    // write article header
+    printf("------------------------------------------------------------------------------------------------------------------------------\n");
+    printf(" Article List (page %u of %u)\n", page, total_pages);
+    printf("------------------------------------------------------------------------------------------------------------------------------\n\n");
+
+    // print articles
+    for(int i = 0; i < article_count; i++)
+    {
+        // print indentation depending on depth
+        for(int j = 0; j < articles[i].depth; j++)
+        {
+            putchar('\t');
+        }
+        
+        // print article info
+        printf(" %u. \"%s\" by %s | %.48s...\n", articles[i].id, articles[i].title, articles[i].author, articles[i].contents);
+    }
+
+    printf("\n------------------------------------------------------------------------------------------------------------------------------\n");
+    printf(" Navigation: x (to exit), right-arrow (next page), left-arrow (prev page)\n");
+    printf("------------------------------------------------------------------------------------------------------------------------------\n");
+    
     // success
     return 0;
 }
