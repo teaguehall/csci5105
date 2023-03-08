@@ -1,16 +1,15 @@
 CC				:=gcc
-CFLAGS_OBJS		:= -Wall -Werror -g -O
-CFLAGS_LIB		:= -Wall -Werror -c
+CFLAGS			:= -Wall -Werror -g -O
 OUT 			:= libshared.a
 SRCS			:= $(wildcard ./*.c)
-OBJS			:= $(wildcard patsub ./%.c,./%.o,$(SRCS))
+OBJS			:= $(patsubst ./%.c,./%.o,$(SRCS))
 SHARED_LIBS		+= -lpthread
 
 $(OUT) : $(OBJS)
-	$(CC) $(OBJS) $(CFLAGS_LIB) -o $(OUT) $(SHARED_LIBS)
+	ar -rc $(OUT) $(OBJS)
 
 %.o: %.c
-	$(CC) $(CFLAGS_OBJS) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@ 
 
 .PHONY: clean
 clean:

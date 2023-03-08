@@ -7,64 +7,13 @@
 #include "render.h"
 #include "../shared/msg.h"
 #include "../shared/article.h"
+#include "../shared/tcp.h"
 
 #include <stdint.h>
 #include <arpa/inet.h>
 
 int main(int argc, char * argv[])
 {
-    Article articles[2];
-
-    strcpy(articles[0].title, "Help Wanted!");
-    strcpy(articles[0].author, "Benjamin J.");
-    strcpy(articles[0].contents, "Hello there, my name is Benjamin. This is an interesting way to type articles. I arbitrarily chose line count of 50 for new lines to occurs. However, who knows if it will be sufficient.");
-    articles[0].id = 77;
-    articles[0].depth = 0;
-    articles[0].parent_id = 0;
-
-    strcpy(articles[1].title, "RE: Help Wanted!");
-    strcpy(articles[1].author, "Joe T.");
-    strcpy(articles[1].contents, "I would be willing to help.");
-    articles[1].id = 78;
-    articles[1].parent_id = 77;
-    articles[1].depth = 1;
-    
-    
-    //  DEBUG TODO REMOVE AFTER TESTING  
-    int page = 1;
-    int total_pages = 2;
-    int cmd;
-
-    while(1)
-    {
-        render_List(page, total_pages, 2, articles);
-        cmd = getchar();
-
-        if(cmd == 37)
-        {
-            if(page > 2) page--;
-        }
-        else if((cmd == 39))
-        {
-            if(page < total_pages) page++;
-        }
-        else if(cmd == 'x')
-        {
-            break;
-        }
-        else
-        {
-            printf("%c\n", cmd);
-            return 1;
-        }
-    }
-
-    render_List(1, 2, 2, articles);
-    return 1;
-
-
-    ServerInfo connect_info;
-    
     char command[1024];
     int semicolon_count;
     int semicolon_1_pos;
@@ -86,13 +35,27 @@ int main(int argc, char * argv[])
         // TODO add optional args for test scenarios
         fprintf(stderr, "\n");
 
-        return EXIT_FAILURE;
+        exit(EXIT_FAILURE);
     }
 
-    // validate connection info
-    strcpy(connect_info.address, "127.0.0.1"); // TODO read in arg
-    connect_info.port = 5555; // TODO read in arg
+    // validate server address
+    if(!tcp_IpAddrIsValid(argv[2]))
+    {
+        fprintf(stderr, "ERROR: Invalid server address \"%s\" provided\n", argv[2]);
+        exit(EXIT_FAILURE);
+    }
 
+    // validate port number
+    if(!tcp_PortIsValid(atoi(argv[3])))
+    {
+        fprintf(stderr, "ERROR: Invalid server address \"%s\" provided\n", argv[2]);
+        exit(EXIT_FAILURE);
+    }
+    
+    // save server connect info for later use
+    ServerInfo connect_info;
+    strcpy(connect_info.address, argv[2]);
+    connect_info.port = atoi(argv[3]);
 
     // display message formatting instructions
      printf("\n--------------------------------------------\n");
@@ -108,12 +71,13 @@ int main(int argc, char * argv[])
     while(1)
     {
         semicolon_count = 0;
+        article_title[0] = 0;
+        article_contents[0] = 0;
         
         /////////////////////////////////////////////////////////////////////////////////////////////////////
         ///////////////////////////////////////// GET USER INPUT ////////////////////////////////////////////
         /////////////////////////////////////////////////////////////////////////////////////////////////////
         printf("Enter command: POST, READ, CHOOSE, or REPLY\n");
-        
         
         if(fgets(command, sizeof(command), stdin) == NULL)
         {
@@ -149,14 +113,24 @@ int main(int argc, char * argv[])
 
             // extract article title
             memcpy(article_title, command + semicolon_1_pos + 1, semicolon_2_pos - semicolon_1_pos - 1);
+            if(strlen(article_title) == 0)
+            {
+                fprintf(stderr, "ERROR: Empty article title was provided in POST. Expected formatting \"POST;<title>;<contents>\"\n");
+                continue;
+            }
 
             // extract article contents
             memcpy(article_contents, command + semicolon_2_pos + 1, strlen(command) - semicolon_2_pos - 1);
+            if(strlen(article_contents) == 0)
+            {
+                fprintf(stderr, "ERROR: Empty article content was provided in POST. Expected formatting \"POST;<title>;<contents>\"\n");
+                continue;
+            }
 
             // post article to server
             if(net_Post(connect_info, argv[3], article_title, article_contents))
             {
-                fprintf(stderr, "ERROR: Client failed POST article\n");
+                fprintf(stderr, "ERROR: Client failed to POST article\n");
             }
             else
             {

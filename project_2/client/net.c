@@ -1,9 +1,11 @@
 #include "net.h"
 #include <stdio.h>
 
+// private variables
+
 int net_Post(ServerInfo server, char* author, char* title, char* contents)
 {
-    printf("Hello from clientNet_Post\n");
+    // TODO
 
     return 0;
 }

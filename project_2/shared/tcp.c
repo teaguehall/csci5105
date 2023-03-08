@@ -32,18 +32,18 @@ int tcp_Connect(const char* remote_addr, int remote_port, int* out_socket)
     int result;
 
     // force disconnect (just in case)
-    *out_socket = netDisconnect(*out_socket);
+    *out_socket = tcp_Disconnect(*out_socket);
 
     // validate IP address
     result = inet_pton(AF_INET, remote_addr, &remote.sin_addr);
     if(result == 0)
     {
-        printf("ERROR: \"%s\" is an invalid address.\n", remote_addr);
+        fprintf(stderr, "ERROR: Attempted to connect to an invalid IP address\"%s\"\n", remote_addr);
         return -1; // failure
     }
     else if(result < 0)
     {
-        printf("ERROR: %s. Please try again.\n", strerror(errno));
+        fprintf(stderr, "ERROR: %s. Please try again.\n", strerror(errno));
         return -1; // failure
     }
 
@@ -56,23 +56,19 @@ int tcp_Connect(const char* remote_addr, int remote_port, int* out_socket)
     *out_socket = socket(AF_INET, SOCK_STREAM, 0);
     if(*out_socket == -1)
     {
-        printf("ERROR: Failed to create socket, %s\n", strerror(errno));
-        return -1;
+        fprintf(stderr, "ERROR: Failed to create socket, %s\n", strerror(errno));
+        return -1; // failure
     } 
-    
-    // connect to remote machine
-    printf("Connecting to remote machine at %s:%u...\n", remote_addr, remote_port);
 
     result = connect(*out_socket, (struct sockaddr*)&remote, sizeof(remote));
     if(result == -1)
     {
-        printf("ERROR: Failed to connect. %s\n", strerror(errno));
+        fprintf(stderr, "ERROR: Failed to connect. %s\n", strerror(errno));
         close(*out_socket);
         return -1; // failure
     }
 
     // success
-    printf("Successfully connected to \"%s\".\n", remote_addr);
     return 0; 
 }
 
@@ -89,30 +85,30 @@ int tcp_CreateListener(const char* local_addr, int local_port, int* out_socket)
     *out_socket = socket(AF_INET, SOCK_STREAM, 0);
     if (*out_socket == -1) 
     {
-        printf("ERROR: Failed to create socket, %s\n", strerror(errno));
+        fprintf(stderr, "ERROR: Failed to create socket, %s\n", strerror(errno));
         return -1;
     }
 
     // set socket as reusable (to avoid "address already in use" error)
     if(setsockopt(*out_socket, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)
     {
-        printf("ERROR: Failed to configure socket as address reusable. %s\n", strerror(errno));
-        return -1;
+        fprintf(stderr, "ERROR: Failed to configure socket as address reusable. %s\n", strerror(errno));
+        return -1; // failure
     }
 
     // bind listening socket to specified address / port
     if (bind(*out_socket, (struct sockaddr*) &addr, sizeof(addr)) == -1) 
     {
-        printf("ERROR: Socket bind error, %s\n", strerror(errno));
+        fprintf(stderr, "ERROR: Socket bind error, %s\n", strerror(errno));
         close(*out_socket);
-        return -1;
+        return -1; //failure
     }
 
     // begin listening
     if (listen(*out_socket, 1/*length of connections queue*/) == -1) {
         printf("ERROR: Listening error, %s\n", strerror(errno));
         close(*out_socket);
-        return -1;
+        return -1; // failure
     }
 
     // success
@@ -128,9 +124,9 @@ int tcp_Accept(int listener_socket, char* remote_addr, int* remote_port, int* ou
         *out_socket = accept(listener_socket, (struct sockaddr*)&remote, &socklen);
         if(*out_socket == -1) 
         {
-            printf("ERROR: Error occurred during connection accept, %s\n", strerror(errno));
+            fprintf(stderr, "ERROR: Error occurred during connection accept, %s\n", strerror(errno));
             close(*out_socket);
-            return -1;
+            return -1; // failure
         }
 
         // copy remote info  to outputs
@@ -179,7 +175,7 @@ int tcp_IsConnected(int socket)
 }
 
 // sends data
-int tcp_Send(int socket, const char* msg_send, size_t msg_size, uint32_t timeout_sec)
+int tcp_Send(int socket, const char* msg_send, size_t msg_size, int timeout_sec)
 {
     // configure timeout
     struct timeval timeout;      
@@ -211,7 +207,7 @@ int tcp_Send(int socket, const char* msg_send, size_t msg_size, uint32_t timeout
 }
 
 // receives data from socket
-int tcp_Recv(int socket, char* msg_recv, size_t msg_size, uint32_t timeout_sec)
+int tcp_Recv(int socket, char* msg_recv, size_t msg_size, int timeout_sec)
 {
     // configure timeout
     struct timeval timeout;      
