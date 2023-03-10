@@ -3,13 +3,11 @@
 #include "../shared/msg.h"
 #include "../shared/tcp.h"
 
-// private variables
-static int _socket = -1;
-static char message[4096];
-
 // sends message to server and receives response. return 0 on success, -1 on error
 int net_SendRecv(ServerInfo server, char* msg_send, char* msg_recv)
 {
+    int _socket = -1;
+    
     uint32_t msg_send_size;
     uint32_t msg_send_type;
     uint32_t msg_recv_size;
@@ -23,7 +21,10 @@ int net_SendRecv(ServerInfo server, char* msg_send, char* msg_recv)
     }
 
     // calculate message size (contents + header)
-    msg_Parse_Header(msg_send, &msg_send_type, &msg_send_size);
+    if(msg_Parse_Header(msg_send, &msg_send_type, &msg_send_size))
+    {
+        fprintf(stderr, "ERROR: Attempted to send invalid message header to server\n");
+    }
     msg_send_size += MSG_HEADER_OFFSET;
 
     // send message
@@ -90,7 +91,7 @@ int net_Post(ServerInfo server, char* author, char* title, char* contents)
     char recv_msg[4096];
     
     // build message
-    if(msg_Build_PostRequest(message, author, title, contents))
+    if(msg_Build_PostRequest(send_msg, author, title, contents))
     {
         fprintf(stderr, "ERROR: Failed to build POST REQUEST\n");
         return -1; 

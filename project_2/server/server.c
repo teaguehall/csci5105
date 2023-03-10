@@ -9,7 +9,7 @@ int main(int argc, char * argv[])
 {
     int listener_socket = -1;
     char local_addr[] = "127.0.0.1";
-    int local_port = 555;
+    int local_port = 5555;
     
     int remote_socket = -1;
     char remote_addr[64];
@@ -30,7 +30,7 @@ int main(int argc, char * argv[])
     
     // accept connections
     while(1)
-    {
+    {        
         // accept connection
         if(tcp_Accept(listener_socket, remote_addr, &remote_port, &remote_socket))
         {
@@ -38,12 +38,10 @@ int main(int argc, char * argv[])
             return -1;
         }
 
-        printf("Accepted connection from client %s:%d\n", remote_addr, remote_port);
-
         // wait for header
-        if(tcp_Recv(listener_socket, recv_msg, MSG_HEADER_OFFSET, 5))
+        if(tcp_Recv(remote_socket, recv_msg, MSG_HEADER_OFFSET, 5))
         {
-            printf("ERROR occurred while accepting connection\n");
+            printf("ERROR occurred while receiving message header\n");
             return -1;
         }
 
@@ -55,9 +53,9 @@ int main(int argc, char * argv[])
         }
 
         // read rest of message
-        if(tcp_Recv(listener_socket, recv_msg + MSG_HEADER_OFFSET, msg_recv_size, 5))
+        if(tcp_Recv(remote_socket, recv_msg + MSG_HEADER_OFFSET, msg_recv_size, 5))
         {
-            printf("ERROR occurred while accepting connection\n");
+            printf("ERROR occurred while receiving message body\n");
             return -1;
         }
 
@@ -75,8 +73,18 @@ int main(int argc, char * argv[])
         // print debug message
         printf("Server received post: author = %s, title = %s, contents = %s\n", author, title, contents);
 
+        // build response
+        msg_Build_PostResponse(send_msg);
+
+        // send response
+        if(tcp_Send(remote_socket, send_msg, MSG_HEADER_OFFSET, 5))
+        {
+            printf("ERROR occurred while accepting connection\n");
+            return -1;
+        }
+
         // disconnect from client
-        tcp_Disconnect(listener_socket);
+        tcp_Disconnect(remote_socket);
     }
 
     return EXIT_SUCCESS;

@@ -138,6 +138,15 @@ int msg_Parse_PostRequest(char* in_msg, char* out_author, char* out_title, char*
     return 0;
 }
 
+int msg_Build_PostResponse(char* out_msg)
+{
+    // write header
+    msg_Build_Header(out_msg, MSG_TYPE_POST_RESPONSE,  0);
+
+    // success
+    return 0;      
+}
+
 // Builds MSG_TYPE_READ_REQUEST message. Returns 0 on success, -1 on error
 int msg_Build_ReadRequest(char* out_msg, uint32_t page_size, uint32_t page_number)
 {
