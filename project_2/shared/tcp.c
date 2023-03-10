@@ -137,7 +137,7 @@ int tcp_Accept(int listener_socket, char* remote_addr, int* remote_port, int* ou
         return 0;
 }
 
-// closes connections and returns -1
+// closes connections and returns 0
 int tcp_Disconnect(int socket)
 {
     if(socket != -1)
@@ -145,7 +145,7 @@ int tcp_Disconnect(int socket)
         close(socket);
     }
     
-    return -1;
+    return 0;
 }
 
 // return 1 if socket is connected to remote host

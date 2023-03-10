@@ -78,7 +78,7 @@ int main(int argc, char * argv[])
         ///////////////////////////////////////// GET USER INPUT ////////////////////////////////////////////
         /////////////////////////////////////////////////////////////////////////////////////////////////////
         printf("Enter command: POST, READ, CHOOSE, or REPLY\n");
-        
+                
         if(fgets(command, sizeof(command), stdin) == NULL)
         {
             fprintf(stderr, "ERROR: fgets call failed with error \"%s\"\n", strerror(errno));
