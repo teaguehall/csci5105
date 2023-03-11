@@ -12,13 +12,19 @@
 #include <stdint.h>
 #include <arpa/inet.h>
 
+#define MAX_ARTICLES  128
+
+static Article article_buffer[MAX_ARTICLES];
+
 int main(int argc, char * argv[])
 {
+    
     char command[1024];
     int semicolon_count;
     int semicolon_1_pos;
     int semicolon_2_pos;
-    int i; 
+    int i;
+    uint32_t articles_read;
 
     //int article_id;
     char article_title[ARTICLE_MAX_TITLE];
@@ -144,7 +150,28 @@ int main(int argc, char * argv[])
         /////////////////////////////////////////////////////////////////////////////////////////////////////
         else if(strncmp(command, "READ", 4) == 0 || strncmp(command, "read", 4) == 0)
         {
-            // TODO
+            #define MAX_ARTICLES  128
+            static Article article_buffer[MAX_ARTICLES];
+            
+            // send read request to article (we just request all articles from server that will fit in our buffer)
+            if(net_Read(connect_info, MAX_ARTICLES, &articles_read,  article_buffer))
+            {
+
+            }
+            else
+            {
+
+            }
+            
+            // post article to server
+            if(net_Post(connect_info, argv[1], article_title, article_contents))
+            {
+                fprintf(stderr, "ERROR: Client failed to POST article\n");
+            }
+            else
+            {
+                printf("Client successfully posted article\n");
+            }
         }
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////

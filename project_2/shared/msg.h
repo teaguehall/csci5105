@@ -5,7 +5,7 @@
     #include <stdio.h>
     #include <stdint.h>
     #include "article.h"
-    
+
     // message parsing and building functions
     int msg_Build_Header(char* out_msg, uint32_t type,  uint32_t size);
     int msg_Parse_Header(char* in_msg, uint32_t* out_type, uint32_t* out_size);
@@ -14,8 +14,8 @@
     int msg_Build_PostRequest(char* out_msg, char* in_author, char* in_title, char* in_contents);
     int msg_Parse_PostRequest(char* in_msg, char* out_author, char* out_title, char* out_contents);
     int msg_Build_PostResponse(char* out_msg);
-    int msg_Build_ReadRequest(char* out_msg, uint32_t page_size, uint32_t page_number);
-    int msg_Parse_ReadRequest(char* in_msg, uint32_t* out_page_size, uint32_t* out_page_number);
+    int msg_Build_ReadRequest(char* out_msg, uint32_t max_articles);
+    int msg_Parse_ReadRequest(char* in_msg, uint32_t* out_max_articles);
     int msg_Build_ReadResponse(char* out_msg, int article_count, Article articles[]);
     int msg_Parse_ReadResponse(char* in_msg, uint32_t* out_article_count, Article out_articles[]);
     int msg_Build_ChooseRequest(char* out_msg, uint32_t article_id);

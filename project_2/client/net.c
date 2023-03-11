@@ -108,8 +108,33 @@ int net_Post(ServerInfo server, char* author, char* title, char* contents)
     return 0;
 }
 
-int net_Read(ServerInfo server, int max_article_count, int* out_article_count,  Article* out_data)
+int net_Read(ServerInfo server, int max_article_count, int* out_article_count,  Article out_articles[])
 {
+    char send_msg[4096];
+    char recv_msg[4096];
+
+    // build message
+    if(msg_Build_ReadRequest(send_msg, max_article_count))
+    {
+        fprintf(stderr, "ERROR: Failed to build READ REQUEST\n");
+        return -1; 
+    }
+
+    // transmit message
+    if(net_SendRecv(server, send_msg, recv_msg))
+    {
+        fprintf(stderr, "ERROR: Error occurred while sending READ REQUEST message\n");
+        return -1; 
+    }
+ 
+    // parse response
+    if(msg_Parse_ReadResponse(recv_msg, out_article_count, out_articles))
+    {
+        fprintf(stderr, "ERROR: Error occurred while parsing READ RESPONSE message\n");
+        return -1; 
+    }
+
+    // success
     return 0;
 }
 

@@ -26,17 +26,19 @@ static void handlePostRequest(int socket, char* msg_rcvd)
         return;
     }
 
-    // TODO do something
+    /////////////////////////////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////// TODO do something /////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////////////////////////////
     printf("Server received post: author = %s, title = %s, contents = %s\n", author, title, contents); 
 
     // build response
     msg_Build_PostResponse(response);
 
     // send response
-    if(tcp_Send(socket, msg_rcvd, MSG_HEADER_OFFSET, 5))
+    if(tcp_Send(socket, response, MSG_HEADER_OFFSET, 5))
     {
         fprintf(stderr, "ERROR: Failed to send POST RESPONSE\n");
-    }  
+    }
 }
 
 // handles read request message from clients
@@ -55,7 +57,9 @@ static void handleReadRequest(int socket, char* msg_rcvd)
         return;
     }
 
-    // TODO do something
+    /////////////////////////////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////// TODO do something /////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////////////////////////////
     printf("Server received READ REQUEST: page size = %u, page number = %u\n", page_size, page_number);
     Article articles[2];
 
@@ -104,7 +108,9 @@ static void handleChooseRequest(int socket, char* msg_rcvd)
         return;
     }
 
-    // TODO do something
+    /////////////////////////////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////// TODO do something /////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////////////////////////////
     printf("Server received CHOOSE REQUEST: article id = %u\n", article_id);
     Article article;
 
@@ -146,7 +152,9 @@ static void handleReplyRequest(int socket, char* msg_rcvd)
         return;
     }
 
-    // TODO do something
+    /////////////////////////////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////// TODO do something /////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////////////////////////////
     printf("Server received CHOOSE REQUEST: article id = %u\n", article_id);
     Article article;
 
@@ -236,21 +244,20 @@ void* funcClientHandler(void *vargp)
         {
             case MSG_TYPE_POST_REQUEST :
                 handlePostRequest(remote_socket, recv_msg);
+                break;
             case MSG_TYPE_READ_REQUEST :
                 handleReadRequest(remote_socket, recv_msg);
+                break;
             case MSG_TYPE_CHOOSE_REQUEST :
                 handleChooseRequest(remote_socket, recv_msg);
+                break;
             case MSG_TYPE_REPLY_REQUEST :
                 handleReplyRequest(remote_socket, recv_msg);
+                break;
             default:
                 fprintf(stderr, "ERROR: Server received unrecognized message\n");
                 continue;
         }
-
-        // handle rest of message
-
-
-
 
         // disconnect from client
         tcp_Disconnect(remote_socket);

@@ -148,16 +148,12 @@ int msg_Build_PostResponse(char* out_msg)
 }
 
 // Builds MSG_TYPE_READ_REQUEST message. Returns 0 on success, -1 on error
-int msg_Build_ReadRequest(char* out_msg, uint32_t page_size, uint32_t page_number)
+int msg_Build_ReadRequest(char* out_msg, uint32_t max_articles)
 {
     uint32_t bytes_written = 0;
 
-    // write page size
-    *(uint32_t*)(out_msg + MSG_HEADER_OFFSET + bytes_written) = htonl(page_size);
-    bytes_written += 4;
-
-    // write page number
-    *(uint32_t*)(out_msg + MSG_HEADER_OFFSET + bytes_written) = htonl(page_number);
+    // write max articles
+    *(uint32_t*)(out_msg + MSG_HEADER_OFFSET + bytes_written) = htonl(max_articles);
     bytes_written += 4;
 
     // write header
@@ -168,7 +164,7 @@ int msg_Build_ReadRequest(char* out_msg, uint32_t page_size, uint32_t page_numbe
 }
 
 // Parses MSG_TYPE_READ_REQUEST message. Returns 0 on success, -1 on error
-int msg_Parse_ReadRequest(char* in_msg, uint32_t* out_page_size, uint32_t* out_page_number)
+int msg_Parse_ReadRequest(char* in_msg, uint32_t* out_max_articles)
 {
     uint32_t msg_type, msg_size;
     uint32_t bytes_read = 0;
@@ -188,11 +184,7 @@ int msg_Parse_ReadRequest(char* in_msg, uint32_t* out_page_size, uint32_t* out_p
     }
 
     // parse out page size
-    *out_page_size = ntohl(*(uint32_t*)(in_msg + MSG_HEADER_OFFSET + bytes_read));
-    bytes_read += 4;
-
-    // parse out page number
-    *out_page_number = ntohl(*(uint32_t*)(in_msg + MSG_HEADER_OFFSET + bytes_read));
+    *out_max_articles = ntohl(*(uint32_t*)(in_msg + MSG_HEADER_OFFSET + bytes_read));
     bytes_read += 4;
 
     // success
