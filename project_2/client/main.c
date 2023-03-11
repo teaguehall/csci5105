@@ -28,6 +28,8 @@ int main(int argc, char * argv[])
     uint32_t articles_read;
 
     //int article_id;
+    unsigned int article_id;
+    char article_id_str[ARTICLE_MAX_TITLE];
     char article_title[ARTICLE_MAX_TITLE];
     char article_contents[ARTICLE_MAX_CONTENTS];
 
@@ -71,15 +73,17 @@ int main(int argc, char * argv[])
     printf("POST;<title>;<contents>\n");
     printf("READ\n");
     printf("CHOOSE;<article id>\n");
-    printf("REPLY;<article id>\n");
+    printf("REPLY;<article id>;<response>\n");
     printf("--------------------------------------------\n\n");
 
     // command loop
     while(1)
     {
         semicolon_count = 0;
-        article_title[0] = 0;
-        article_contents[0] = 0;
+
+        memset(article_title, 0, sizeof(article_title));
+        memset(article_contents, 0, sizeof(article_contents));
+        memset(article_id_str, 0, sizeof(article_id_str));
         
         /////////////////////////////////////////////////////////////////////////////////////////////////////
         ///////////////////////////////////////// GET USER INPUT ////////////////////////////////////////////
@@ -155,6 +159,7 @@ int main(int argc, char * argv[])
             if(net_Read(connect_info, MAX_ARTICLES, &articles_read,  article_buffer))
             {
                 fprintf(stderr, "ERROR: Client failed to READ articles\n");
+                continue;
             }
 
             // display contents
@@ -178,7 +183,27 @@ int main(int argc, char * argv[])
         /////////////////////////////////////////////////////////////////////////////////////////////////////
         else if(strncmp(command, "CHOOSE", sizeof("CHOOSE")) == 0 || strncmp(command, "choose", sizeof("choose")) == 0)
         {
-            // TODO
+            // grab article id from inputted command
+            article_id = atoi(command + 6); // we add offset to ignore the CHOOSE; field.
+            if(article_id == 0)
+            {
+                fprintf(stderr, "ERROR: Invalid article ID found in %s\n", command);
+                continue;
+            }
+            
+            // send choose request to server
+            if(net_Choose(connect_info, article_id, article_buffer))
+            {
+                fprintf(stderr, "ERROR: Client failed to retrieve article from server\n");
+                continue;
+            }
+
+            // display article
+            if(render_Article(article_buffer[0]))
+            {
+                fprintf(stderr, "ERROR: Failed to render article\n");
+                continue;
+            }
         }
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -186,8 +211,62 @@ int main(int argc, char * argv[])
         /////////////////////////////////////////////////////////////////////////////////////////////////////
         else if(strncmp(command, "REPLY", sizeof("REPLY")) == 0 || strncmp(command, "reply", sizeof("reply")) == 0)
         {
-            // TODO
+            // find semi-colon locations in "REPLY;<article id>;<response>"
+            for(i = 0; i < strlen(command); i++)
+            {
+                if(command[i] == ';')
+                {
+                    semicolon_count++;
+
+                    if(semicolon_count == 1)
+                        semicolon_1_pos = i;
+                    else if(semicolon_count == 2)
+                        semicolon_2_pos = i;
+                }
+            }
+            if(semicolon_count != 2)
+            {
+                fprintf(stderr, "ERROR: Invalid number of semi-colons found in REPLY message. Expected formatting \"REPLY;<article id>;<response>\"\n");
+                continue;
+            }
+
+            // extract article ID
+            memcpy(article_id_str, command + semicolon_1_pos + 1, semicolon_2_pos - semicolon_1_pos - 1);
+            if(strlen(article_id_str) == 0)
+            {
+                fprintf(stderr, "ERROR: No article ID was found in REPLY. Expected formatting \"REPLY;<article id>;<response>\"\n");
+                continue;
+            }
+
+            article_id = atoi(article_id_str);
+            if(article_id == 0)
+            {
+                fprintf(stderr, "ERROR: Invalid article ID \"%s\" found REPLY. Expected formatting \"REPLY;<article id>;<response>\"\n", article_id_str);
+                continue;
+            }
+
+            // extract reply contents
+            memcpy(article_contents, command + semicolon_2_pos + 1, strlen(command) - semicolon_2_pos - 1);
+            if(strlen(article_contents) == 0)
+            {
+                fprintf(stderr, "ERROR: Empty response was provided in REPLY. Expected formatting \"REPLY;<article id>;<response>\"\n");
+                continue;
+            }
+
+            // send reply to server
+            if(net_Reply(connect_info, article_id, argv[1], article_contents))
+            {
+                fprintf(stderr, "ERROR: Client failed to POST article\n");
+            }
+            else
+            {
+                printf("Client successfully posted article\n");
+            }
         }
+
+        /////////////////////////////////////////////////////////////////////////////////////////////////////
+        ////////////////////////////////// UNEXPECTED MESSAGE HANDLER  //////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////////////
         else
         {
             fprintf(stderr, "WARN: Unexpected command \"%s\" received. Try again...\n", command);
