@@ -12,7 +12,8 @@
 #include <stdint.h>
 #include <arpa/inet.h>
 
-#define MAX_ARTICLES  128
+#define MAX_ARTICLES        128
+#define PAGE_SIZE           16
 
 static Article article_buffer[MAX_ARTICLES];
 
@@ -149,28 +150,26 @@ int main(int argc, char * argv[])
         /////////////////////////////////////////// READ HANDLER  ///////////////////////////////////////////
         /////////////////////////////////////////////////////////////////////////////////////////////////////
         else if(strncmp(command, "READ", 4) == 0 || strncmp(command, "read", 4) == 0)
-        {
-            #define MAX_ARTICLES  128
-            static Article article_buffer[MAX_ARTICLES];
-            
-            // send read request to article (we just request all articles from server that will fit in our buffer)
+        {           
+            // send read request to article (we just request all articles from server that will fit into our buffer)
             if(net_Read(connect_info, MAX_ARTICLES, &articles_read,  article_buffer))
             {
+                fprintf(stderr, "ERROR: Client failed to READ articles\n");
+            }
+
+            // display contents
+            if(articles_read > 0)
+            {
+                // display articles
+                if(render_List(PAGE_SIZE, articles_read, article_buffer))
+                {
+                    fprintf(stderr, "ERROR: Error occurred while displaying arcticles\n");
+                }
 
             }
             else
             {
-
-            }
-            
-            // post article to server
-            if(net_Post(connect_info, argv[1], article_title, article_contents))
-            {
-                fprintf(stderr, "ERROR: Client failed to POST article\n");
-            }
-            else
-            {
-                printf("Client successfully posted article\n");
+                fprintf(stderr, "WARN: Server returned zero articles\n");
             }
         }
 

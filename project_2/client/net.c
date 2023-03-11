@@ -108,7 +108,7 @@ int net_Post(ServerInfo server, char* author, char* title, char* contents)
     return 0;
 }
 
-int net_Read(ServerInfo server, int max_article_count, int* out_article_count,  Article out_articles[])
+int net_Read(ServerInfo server, int max_article_count, unsigned int* out_article_count, Article out_articles[])
 {
     char send_msg[4096];
     char recv_msg[4096];

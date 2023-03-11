@@ -27,7 +27,7 @@ static void handlePostRequest(int socket, char* msg_rcvd)
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////
-    ///////////////////////////////// TODO do something /////////////////////////////////////////////
+    ///////////////////////////////// TODO  /////////////////////////////////////////////
     /////////////////////////////////////////////////////////////////////////////////////////////////
     printf("Server received post: author = %s, title = %s, contents = %s\n", author, title, contents); 
 
@@ -47,11 +47,10 @@ static void handleReadRequest(int socket, char* msg_rcvd)
     char response[8192];
     
     // parsed reponse
-    uint32_t page_size;
-    uint32_t page_number;
+    uint32_t max_articles;
 
     // extract message contents
-    if(msg_Parse_ReadRequest(msg_rcvd, &page_size, &page_number))
+    if(msg_Parse_ReadRequest(msg_rcvd, &max_articles))
     {
         printf("ERROR while parsing READ REQUEST message");
         return;
@@ -60,7 +59,7 @@ static void handleReadRequest(int socket, char* msg_rcvd)
     /////////////////////////////////////////////////////////////////////////////////////////////////
     ///////////////////////////////// TODO do something /////////////////////////////////////////////
     /////////////////////////////////////////////////////////////////////////////////////////////////
-    printf("Server received READ REQUEST: page size = %u, page number = %u\n", page_size, page_number);
+    printf("Server received READ REQUEST: max_articles = %u\n", max_articles);
     Article articles[2];
 
     articles[0].id = 1;
@@ -90,7 +89,7 @@ static void handleReadRequest(int socket, char* msg_rcvd)
     if(tcp_Send(socket, response, msg_size + MSG_HEADER_OFFSET, 5))
     {
         fprintf(stderr, "ERROR: Failed to send CHOOSE-RESPONSE\n");
-    }      
+    }
 }
 
 // handles choose request message from clients
