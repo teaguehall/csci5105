@@ -6,6 +6,8 @@
     #include <stdint.h>
     #include "article.h"
 
+    size_t msg_GetActualSize(char* msg);
+
     // message parsing and building functions
     int msg_Build_Header(char* out_msg, uint32_t type,  uint32_t size);
     int msg_Parse_Header(char* in_msg, uint32_t* out_type, uint32_t* out_size);

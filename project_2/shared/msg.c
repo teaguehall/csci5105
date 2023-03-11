@@ -2,6 +2,16 @@
 #include <string.h>
 #include <arpa/inet.h>
 
+size_t msg_GetActualSize(char* msg)
+{
+    uint32_t type = 0;
+    uint32_t size = 0;
+    
+    msg_Parse_Header(msg, &type, &size);
+
+    return (size + MSG_HEADER_OFFSET);
+}
+
 // Builds message header. Always succeeds and returns 0
 int msg_Build_Header(char* out_msg, uint32_t type,  uint32_t size)
 {
@@ -478,4 +488,13 @@ int msg_Parse_ReplyRequest(char* in_msg, uint32_t* out_article_id, char* out_aut
 
     // success
     return 0;
+}
+
+int msg_Build_ReplyResponse(char* out_msg)
+{
+    // write header
+    msg_Build_Header(out_msg, MSG_TYPE_REPLY_RESPONSE,  0);
+
+    // success
+    return 0;      
 }

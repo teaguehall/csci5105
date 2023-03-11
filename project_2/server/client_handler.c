@@ -140,44 +140,41 @@ static void handleChooseRequest(int socket, char* msg_rcvd)
 static void handleReplyRequest(int socket, char* msg_rcvd)
 {
     char response[8192];
-    
+    char error_msg[4096];
+
     // parsed reponse
-    uint32_t article_id;
+    uint32_t response_id;
+    char author[4096];
+    char contents[4096];
 
     // extract message contents
-    if(msg_Parse_ChooseRequest(msg_rcvd, &article_id))
+    if(msg_Parse_ReplyRequest(msg_rcvd, &response_id, author, contents))
     {
-        printf("ERROR while parsing CHOOSE REQUEST message");
+        printf("ERROR while parsing Post request message");
         return;
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////
-    ///////////////////////////////// TODO do something /////////////////////////////////////////////
+    ///////////////////////////////// TODO  /////////////////////////////////////////////
     /////////////////////////////////////////////////////////////////////////////////////////////////
-    printf("Server received CHOOSE REQUEST: article id = %u\n", article_id);
-    Article article;
+    printf("Server received reply: author = %s, article id = %d, contents = %s\n", author, response_id, contents); 
 
-    article.id = 1;
-    article.parent_id = 0;
-    article.depth = 0;
-    strcpy(article.author, "Teague");
-    strcpy(article.title, "Okay then!");
-    strcpy(article.contents, "You requested this!");
-
-    // build response
-    msg_Build_ChooseResponse(response, article);
-
-    // find message size
-    uint32_t msg_type;
-    uint32_t msg_size;
-
-    msg_Parse_Header(response, &msg_type, &msg_size);
-    
-    // send response
-    if(tcp_Send(socket, response, msg_size + MSG_HEADER_OFFSET, 5))
+    // check if article ID that is being responded to actually exists
+    if(response_id == 1 || response_id == 2)
     {
-        fprintf(stderr, "ERROR: Failed to send CHOOSE-RESPONSE\n");
-    }   
+        msg_Build_ReplyResponse(response);
+    }
+    else
+    {
+        sprintf(error_msg, "Client attempted to reply to article \"%u\" which does not exist", response_id);
+        msg_Build_ErrorResponse(response, error_msg);
+    }
+
+    // send response
+    if(tcp_Send(socket, response, msg_GetActualSize(response), 5))
+    {
+        fprintf(stderr, "ERROR: Failed to send POST RESPONSE\n");
+    }
 }
 
 void* funcClientHandler(void *vargp)
