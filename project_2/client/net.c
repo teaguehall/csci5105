@@ -138,8 +138,33 @@ int net_Read(ServerInfo server, int max_article_count, unsigned int* out_article
     return 0;
 }
 
-int net_Choose(ServerInfo server, int article_id, Article* out_data)
+int net_Choose(ServerInfo server, int article_id, Article* out_article)
 {
+    char send_msg[4096];
+    char recv_msg[4096];
+
+    // build message
+    if(msg_Build_ChooseRequest(send_msg, article_id))
+    {
+        fprintf(stderr, "ERROR: Failed to build CHOOSE REQUEST\n");
+        return -1;
+    }
+
+    // transmit message
+    if(net_SendRecv(server, send_msg, recv_msg))
+    {
+        fprintf(stderr, "ERROR: Error occurred while sending READ REQUEST message\n");
+        return -1; 
+    }
+ 
+    // parse response
+    if(msg_Parse_ChooseResponse(recv_msg, out_article))
+    {
+        fprintf(stderr, "ERROR: Error occurred while parsing CHOOSE RESPONSE message\n");
+        return -1;
+    }
+
+    // success
     return 0;
 }
 

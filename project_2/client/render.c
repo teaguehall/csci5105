@@ -5,17 +5,26 @@
 #include <errno.h>
 #include "../shared/article.h"
 
-// formats an article output to the terminal
-int render_Article(Article article)
+// clears terminal
+int render_ClearTerminal(void)
 {
-    int char_count = 0;
-
-    // clear terminal
     if(system("clear") == -1)
     {
         fprintf(stderr, "ERROR: Failed to clear terminal during article rendering: %s\n", strerror(errno));
         return -1;
     }
+
+    // success
+    return 0;
+}
+
+// formats an article output to the terminal
+int render_Article(Article article)
+{
+    int char_count = 0;
+
+    // clear terminal on start-up
+    render_ClearTerminal();
 
     // write article header
     printf("---------------------------------------------------------------\n");
@@ -70,16 +79,12 @@ int render_List(int page_size, int article_count, Article articles[])
         if(index_2 > article_count) index_2 = article_count; // truncate last index if it goes beyond the article count
         
         // clear terminal on start-up
-        if(system("clear") == -1)
-        {
-            fprintf(stderr, "ERROR: Failed to clear terminal during article rendering: %s\n", strerror(errno));
-            return -1;
-        }
+        render_ClearTerminal();
         
         // write article header
-        printf("------------------------------------------------------------------------------------------------------------------------------\n");
+        printf("----------------------------------------------------------------------------------------------\n");
         printf(" Article List (page %u of %u)\n", curr_page, total_pages);
-        printf("------------------------------------------------------------------------------------------------------------------------------\n\n");
+        printf("----------------------------------------------------------------------------------------------\n\n");
         
         // print article page
         for(i = index_1; i < index_2; i++)
@@ -95,9 +100,9 @@ int render_List(int page_size, int article_count, Article articles[])
         }
 
         // prompt user for next input
-        printf("\n------------------------------------------------------------------------------------------------------------------------------\n");
+        printf("\n----------------------------------------------------------------------------------------------\n");
         printf(" Type: exit (to exit), next (for next page), prev (for prev page)\n");
-        printf("------------------------------------------------------------------------------------------------------------------------------\n");
+        printf("----------------------------------------------------------------------------------------------\n");
         
         // read  user input
         if(fgets(command, sizeof(command), stdin) == NULL)
@@ -123,11 +128,7 @@ int render_List(int page_size, int article_count, Article articles[])
     }
 
     // clear terminal on exit
-    if(system("clear") == -1)
-    {
-        fprintf(stderr, "ERROR: Failed to clear terminal during article rendering: %s\n", strerror(errno));
-        return -1;
-    }
+    render_ClearTerminal();
 
     // success
     return 0;

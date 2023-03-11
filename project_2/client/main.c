@@ -67,7 +67,7 @@ int main(int argc, char * argv[])
     connect_info.port = atoi(argv[3]);
 
     // display message formatting instructions
-     printf("\n--------------------------------------------\n");
+    printf("\n--------------------------------------------\n");
     printf("Supported messages + formatting instructions\n");
     printf("--------------------------------------------\n");
     printf("POST;<title>;<contents>\n");
@@ -88,7 +88,7 @@ int main(int argc, char * argv[])
         /////////////////////////////////////////////////////////////////////////////////////////////////////
         ///////////////////////////////////////// GET USER INPUT ////////////////////////////////////////////
         /////////////////////////////////////////////////////////////////////////////////////////////////////
-        printf("Enter command: POST, READ, CHOOSE, or REPLY\n");
+        printf("Enter command: POST, READ, CHOOSE, REPLY, or HELP\n");
                 
         if(fgets(command, sizeof(command), stdin) == NULL)
         {
@@ -97,6 +97,8 @@ int main(int argc, char * argv[])
         }
 
         command[strcspn(command, "\n")] = 0; // remove new line character
+
+        render_ClearTerminal(); // always clear terminal to clean up before next output message
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////
         /////////////////////////////////////////// POST HANDLER  ///////////////////////////////////////////
@@ -181,13 +183,13 @@ int main(int argc, char * argv[])
         /////////////////////////////////////////////////////////////////////////////////////////////////////
         ////////////////////////////////////////// CHOOSE HANDLER  //////////////////////////////////////////
         /////////////////////////////////////////////////////////////////////////////////////////////////////
-        else if(strncmp(command, "CHOOSE", sizeof("CHOOSE")) == 0 || strncmp(command, "choose", sizeof("choose")) == 0)
+        else if(strncmp(command, "CHOOSE", 6) == 0 || strncmp(command, "choose", 6) == 0)
         {
             // grab article id from inputted command
-            article_id = atoi(command + 6); // we add offset to ignore the CHOOSE; field.
+            article_id = atoi(command + 7); // we add offset to ignore the CHOOSE; field.
             if(article_id == 0)
             {
-                fprintf(stderr, "ERROR: Invalid article ID found in %s\n", command);
+                fprintf(stderr, "ERROR: Invalid article ID. Expected formatting \"CHOOSE;<article id>\"\n");
                 continue;
             }
             
@@ -209,7 +211,7 @@ int main(int argc, char * argv[])
         /////////////////////////////////////////////////////////////////////////////////////////////////////
         ////////////////////////////////////////// REPLY HANDLER  ///////////////////////////////////////////
         /////////////////////////////////////////////////////////////////////////////////////////////////////
-        else if(strncmp(command, "REPLY", sizeof("REPLY")) == 0 || strncmp(command, "reply", sizeof("reply")) == 0)
+        else if(strncmp(command, "REPLY", 5) == 0 || strncmp(command, "reply", 5) == 0)
         {
             // find semi-colon locations in "REPLY;<article id>;<response>"
             for(i = 0; i < strlen(command); i++)
@@ -256,12 +258,28 @@ int main(int argc, char * argv[])
             // send reply to server
             if(net_Reply(connect_info, article_id, argv[1], article_contents))
             {
-                fprintf(stderr, "ERROR: Client failed to POST article\n");
+                fprintf(stderr, "ERROR: Client failed to submit REPLY to server\n");
             }
             else
             {
-                printf("Client successfully posted article\n");
+                printf("Client successfully REPLIED to article\n");
             }
+        }
+
+        /////////////////////////////////////////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////// HELP HANDLER  ////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////////////
+        else if(strncmp(command, "HELP", sizeof("HELP")) == 0 || strncmp(command, "help", sizeof("help")) == 0)
+        {
+            // display message formatting instructions
+            printf("\n--------------------------------------------\n");
+            printf("Supported messages + formatting instructions\n");
+            printf("--------------------------------------------\n");
+            printf("POST;<title>;<contents>\n");
+            printf("READ\n");
+            printf("CHOOSE;<article id>\n");
+            printf("REPLY;<article id>;<response>\n");
+            printf("--------------------------------------------\n\n");
         }
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////
