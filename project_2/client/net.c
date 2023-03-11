@@ -61,7 +61,7 @@ int net_SendRecv(ServerInfo server, char* msg_send, char* msg_recv)
     {
         msg_Parse_ErrorResponse(msg_recv, error_string);
         
-        fprintf(stderr, "ERROR: %s\n", error_string);
+        fprintf(stderr, "Server Responded with ERROR: %s\n", error_string);
         return -1;
     }
 
@@ -170,5 +170,23 @@ int net_Choose(ServerInfo server, int article_id, Article* out_article)
 
 int net_Reply(ServerInfo server, int article, char* author, char* contents)
 {
+    char send_msg[4096];
+    char recv_msg[4096];
+
+    // build message
+    if(msg_Build_ReplyRequest(send_msg, article, author, contents))
+    {
+        fprintf(stderr, "ERROR: Failed to build REPLY REQUEST\n");
+        return -1;
+    }
+
+    // transmit message
+    if(net_SendRecv(server, send_msg, recv_msg))
+    {
+        fprintf(stderr, "ERROR: Error occurred while sending REPLY REQUEST message\n");
+        return -1;
+    }
+
+    // success
     return 0;
 }

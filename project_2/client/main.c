@@ -66,8 +66,10 @@ int main(int argc, char * argv[])
     strcpy(connect_info.address, argv[2]);
     connect_info.port = atoi(argv[3]);
 
+    render_ClearTerminal(); // always clear terminal to clean up before next output message
+
     // display message formatting instructions
-    printf("\n--------------------------------------------\n");
+    printf("--------------------------------------------\n");
     printf("Supported messages + formatting instructions\n");
     printf("--------------------------------------------\n");
     printf("POST;<title>;<contents>\n");
@@ -272,7 +274,7 @@ int main(int argc, char * argv[])
         else if(strncmp(command, "HELP", sizeof("HELP")) == 0 || strncmp(command, "help", sizeof("help")) == 0)
         {
             // display message formatting instructions
-            printf("\n--------------------------------------------\n");
+            printf("--------------------------------------------\n");
             printf("Supported messages + formatting instructions\n");
             printf("--------------------------------------------\n");
             printf("POST;<title>;<contents>\n");
