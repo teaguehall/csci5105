@@ -83,6 +83,11 @@ static void handleReadRequest(int socket, char* msg_rcvd)
 // handles choose request message from clients
 static void handleChooseRequest(int socket, char* msg_rcvd)
 {    
+    char error_msg[4096];
+    
+    Article article;
+    int invalid_id;
+    
     // parsed reponse
     uint32_t article_id;
 
@@ -93,30 +98,27 @@ static void handleChooseRequest(int socket, char* msg_rcvd)
         return;
     }
 
-    /////////////////////////////////////////////////////////////////////////////////////////////////
-    ///////////////////////////////// TODO do something /////////////////////////////////////////////
-    /////////////////////////////////////////////////////////////////////////////////////////////////
-    printf("Server received CHOOSE REQUEST: article id = %u\n", article_id);
-    Article article;
-
-    article.id = 1;
-    article.parent_id = 0;
-    article.depth = 0;
-    strcpy(article.author, "Teague");
-    strcpy(article.title, "Okay then!");
-    strcpy(article.contents, "You requested this!");
-
-    // build response
-    msg_Build_ChooseResponse(response, article);
-
-    // find message size
-    uint32_t msg_type;
-    uint32_t msg_size;
-
-    msg_Parse_Header(response, &msg_type, &msg_size);
+    // TODO - implement consistency!!!
+    // choose article from database
+    if(db_Choose(article_id, &article, &invalid_id) == -1)
+    {
+        if(invalid_id)
+        {
+            sprintf(error_msg, "Client attempted to reply to article \"%u\" which does not exist", article_id);
+            msg_Build_ErrorResponse(response, error_msg);
+        }
+        else
+        {
+            msg_Build_ErrorResponse(response, "Failed to submit reply");
+        }
+    }
+    else
+    {
+        msg_Build_ChooseResponse(response, article);
+    }
     
     // send response
-    if(tcp_Send(socket, response, msg_size + MSG_HEADER_OFFSET, 5))
+    if(tcp_Send(socket, response, msg_GetActualSize(response), 5))
     {
         fprintf(stderr, "ERROR: Failed to send CHOOSE-RESPONSE\n");
     }   

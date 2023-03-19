@@ -12,7 +12,7 @@
 #include <stdint.h>
 #include <arpa/inet.h>
 
-#define PAGE_SIZE           16
+#define PAGE_SIZE           10
 
 static Article article_buffer[MAX_ARTICLES];
 
@@ -188,7 +188,7 @@ int main(int argc, char * argv[])
         {
             // grab article id from inputted command
             article_id = atoi(command + 7); // we add offset to ignore the CHOOSE; field.
-            if(article_id == 0)
+            if(article_id == 0  && *(command + 7) != '0')
             {
                 fprintf(stderr, "ERROR: Invalid article ID. Expected formatting \"CHOOSE;<article id>\"\n");
                 continue;

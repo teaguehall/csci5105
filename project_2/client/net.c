@@ -83,7 +83,6 @@ int net_SendRecv(ServerInfo server, char* msg_send, char* msg_recv)
     return 0;
 }
 
-
 // post message to server. returns 0 on success, -1 on error
 int net_Post(ServerInfo server, char* author, char* title, char* contents)
 {
@@ -123,7 +122,6 @@ int net_Read(ServerInfo server, int max_article_count, unsigned int* out_article
     // transmit message
     if(net_SendRecv(server, send_msg, recv_msg))
     {
-        fprintf(stderr, "ERROR: Error occurred while sending READ REQUEST message\n");
         return -1; 
     }
  

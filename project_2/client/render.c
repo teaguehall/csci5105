@@ -83,7 +83,7 @@ int render_List(int page_size, int article_count, Article articles[])
         
         // write article header
         printf("----------------------------------------------------------------------------------------------\n");
-        printf(" Article List (page %u of %u)\n", curr_page, total_pages);
+        printf(" Article List: %d Total Articles (page %u of %u)\n", article_count, curr_page, total_pages);
         printf("----------------------------------------------------------------------------------------------\n\n");
         
         // print article page

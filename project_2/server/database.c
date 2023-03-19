@@ -185,4 +185,42 @@ int db_Reply(int parent_id, char* author, char* contents, int* out_err_db_full, 
         return node.article.id;
 }
 
-int db_Choose(int article_id, Article* out_article);            // will return 0 on success, -1 otherwise for error
+// chooses article from database. returns 0 on success, -1 on error
+int db_Choose(int article_id, Article* out_article, int* out_err_invalid_id)
+{
+    int error = 0;
+    int found = 0;
+    *out_err_invalid_id = 0;
+
+    // lock mutex
+    if(pthread_mutex_lock(&db_lock) != 0) {fprintf(stderr, "ERROR: Failed to lock article database mutex. %s", strerror(errno)); return -1;}
+
+    // find article
+    for(int i = 0; i < db_count; i++)
+    {
+        if(db[i].article.id == article_id)
+        {
+            *out_article = db[i].article;
+            found = 1;
+            break;
+        }
+    }
+
+    // throw error if not found
+    if(!found)
+    {
+        *out_err_invalid_id =1;
+        error = -1;
+        goto exit;
+    }
+    
+    // unlock mutex
+    exit:
+    if(pthread_mutex_unlock(&db_lock) != 0) {fprintf(stderr, "ERROR: Failed to lock article database mutex. %s", strerror(errno)); return -1;}
+
+    // return error or article ID
+    if(error)
+        return error;
+    else
+        return 0;
+}
