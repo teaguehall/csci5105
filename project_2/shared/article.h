@@ -1,9 +1,10 @@
 #ifndef ARTICLE_H
 #define ARTICLE_H
 
-#define ARTICLE_MAX_AUTHOR_NAME 128
-#define ARTICLE_MAX_TITLE 128
-#define ARTICLE_MAX_CONTENTS 1024
+#define MAX_ARTICLES                256
+#define ARTICLE_MAX_AUTHOR_NAME     128
+#define ARTICLE_MAX_TITLE           128
+#define ARTICLE_MAX_CONTENTS        1024
 
 typedef struct Article {
     int id;
