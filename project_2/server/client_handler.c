@@ -8,12 +8,15 @@
 #include "client_handler.h"
 #include "../shared/msg.h"
 #include "../shared/tcp.h"
+#include "database.h"
+
+
+Article articles[MAX_ARTICLES];
+char response[MAX_ARTICLES * sizeof(Article) + MSG_HEADER_OFFSET];      // make response buffer big enough to accomadate largest scenario
 
 // handles post request message from clients
 static void handlePostRequest(int socket, char* msg_rcvd)
-{
-    char response[8192];
-    
+{   
     // parsed reponse
     char author[4096];
     char title[4096];
@@ -26,16 +29,19 @@ static void handlePostRequest(int socket, char* msg_rcvd)
         return;
     }
 
-    /////////////////////////////////////////////////////////////////////////////////////////////////
-    ///////////////////////////////// TODO  /////////////////////////////////////////////
-    /////////////////////////////////////////////////////////////////////////////////////////////////
-    printf("Server received post: author = %s, title = %s, contents = %s\n", author, title, contents); 
-
-    // build response
-    msg_Build_PostResponse(response);
+    // TODO - implement consistency!!!
+    // post article into database 
+    if(db_Post(author, title, contents) == -1)
+    {
+        msg_Build_ErrorResponse(response, "Server failed to post article");
+    }
+    else
+    {
+        msg_Build_PostResponse(response);
+    }
 
     // send response
-    if(tcp_Send(socket, response, MSG_HEADER_OFFSET, 5))
+    if(tcp_Send(socket, response, msg_GetActualSize(response), 5))
     {
         fprintf(stderr, "ERROR: Failed to send POST RESPONSE\n");
     }
@@ -44,7 +50,7 @@ static void handlePostRequest(int socket, char* msg_rcvd)
 // handles read request message from clients
 static void handleReadRequest(int socket, char* msg_rcvd)
 {
-    char response[8192];
+    int count;
     
     // parsed reponse
     uint32_t max_articles;
@@ -56,37 +62,14 @@ static void handleReadRequest(int socket, char* msg_rcvd)
         return;
     }
 
-    /////////////////////////////////////////////////////////////////////////////////////////////////
-    ///////////////////////////////// TODO do something /////////////////////////////////////////////
-    /////////////////////////////////////////////////////////////////////////////////////////////////
-    printf("Server received READ REQUEST: max_articles = %u\n", max_articles);
-    Article articles[2];
-
-    articles[0].id = 1;
-    articles[0].parent_id = 0;
-    articles[0].depth = 0;
-    strcpy(articles[0].author, "Teague");
-    strcpy(articles[0].title, "Help Wanted!");
-    strcpy(articles[0].contents, "I need help doing electrical!");
-
-    articles[1].id = 2;
-    articles[1].parent_id = 1;
-    articles[1].depth = 1;
-    strcpy(articles[1].author, "Adam");
-    strcpy(articles[1].title, "RE: Help Wanted!");
-    strcpy(articles[1].contents, "What kind of electrical do you need?");
+    // read articles from database
+    db_Read(&count, articles);
 
     // build response
-    msg_Build_ReadResponse(response, 2, articles);
-
-    // find message size
-    uint32_t msg_type;
-    uint32_t msg_size;
-
-    msg_Parse_Header(response, &msg_type, &msg_size);
+    msg_Build_ReadResponse(response, count, articles);
     
     // send response
-    if(tcp_Send(socket, response, msg_size + MSG_HEADER_OFFSET, 5))
+    if(tcp_Send(socket, response, msg_GetActualSize(response), 5))
     {
         fprintf(stderr, "ERROR: Failed to send CHOOSE-RESPONSE\n");
     }
@@ -94,9 +77,7 @@ static void handleReadRequest(int socket, char* msg_rcvd)
 
 // handles choose request message from clients
 static void handleChooseRequest(int socket, char* msg_rcvd)
-{
-    char response[8192];
-    
+{    
     // parsed reponse
     uint32_t article_id;
 
@@ -139,7 +120,6 @@ static void handleChooseRequest(int socket, char* msg_rcvd)
 // handles reply request message from clients
 static void handleReplyRequest(int socket, char* msg_rcvd)
 {
-    char response[8192];
     char error_msg[4096];
 
     // parsed reponse

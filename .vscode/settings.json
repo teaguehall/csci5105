@@ -21,6 +21,13 @@
         "client_net.h": "c",
         "list": "c",
         "thread": "c",
-        "article.h": "c"
+        "article.h": "c",
+        "hash_map": "c",
+        "hash_set": "c",
+        "bitset": "c",
+        "algorithm": "c",
+        "string.h": "c",
+        "string": "c",
+        "string_view": "c"
     }
 }
