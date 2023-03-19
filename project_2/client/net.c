@@ -183,7 +183,6 @@ int net_Reply(ServerInfo server, int article, char* author, char* contents)
     // transmit message
     if(net_SendRecv(server, send_msg, recv_msg))
     {
-        fprintf(stderr, "ERROR: Error occurred while sending REPLY REQUEST message\n");
         return -1;
     }
 

@@ -12,7 +12,6 @@
 #include <stdint.h>
 #include <arpa/inet.h>
 
-#define MAX_ARTICLES        128
 #define PAGE_SIZE           16
 
 static Article article_buffer[MAX_ARTICLES];
@@ -243,7 +242,7 @@ int main(int argc, char * argv[])
             }
 
             article_id = atoi(article_id_str);
-            if(article_id == 0)
+            if(article_id == 0 && *(command + 6) != '0')
             {
                 fprintf(stderr, "ERROR: Invalid article ID \"%s\" found REPLY. Expected formatting \"REPLY;<article id>;<response>\"\n", article_id_str);
                 continue;

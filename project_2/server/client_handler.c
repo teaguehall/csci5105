@@ -17,6 +17,8 @@ char response[MAX_ARTICLES * sizeof(Article) + MSG_HEADER_OFFSET];      // make 
 // handles post request message from clients
 static void handlePostRequest(int socket, char* msg_rcvd)
 {   
+    int db_full;
+    
     // parsed reponse
     char author[4096];
     char title[4096];
@@ -31,9 +33,12 @@ static void handlePostRequest(int socket, char* msg_rcvd)
 
     // TODO - implement consistency!!!
     // post article into database 
-    if(db_Post(author, title, contents) == -1)
+    if(db_Post(author, title, contents, &db_full) == -1)
     {
-        msg_Build_ErrorResponse(response, "Server failed to post article");
+        if(db_full)
+        {
+            msg_Build_ErrorResponse(response, "Database full.");
+        } 
     }
     else
     {
@@ -122,6 +127,8 @@ static void handleReplyRequest(int socket, char* msg_rcvd)
 {
     char error_msg[4096];
 
+    int db_full, invalid_id;
+
     // parsed reponse
     uint32_t response_id;
     char author[4096];
@@ -134,20 +141,27 @@ static void handleReplyRequest(int socket, char* msg_rcvd)
         return;
     }
 
-    /////////////////////////////////////////////////////////////////////////////////////////////////
-    ///////////////////////////////// TODO  /////////////////////////////////////////////
-    /////////////////////////////////////////////////////////////////////////////////////////////////
-    printf("Server received reply: author = %s, article id = %d, contents = %s\n", author, response_id, contents); 
-
-    // check if article ID that is being responded to actually exists
-    if(response_id == 1 || response_id == 2)
+    // TODO - implement consistency!!!
+    // reply to article into database 
+    if(db_Reply(response_id, author, contents, &db_full, &invalid_id) == -1)
     {
-        msg_Build_ReplyResponse(response);
+        if(db_full)
+        {
+            msg_Build_ErrorResponse(response, "Database full.");
+        }
+        else if(invalid_id)
+        {
+            sprintf(error_msg, "Client attempted to reply to article \"%u\" which does not exist", response_id);
+            msg_Build_ErrorResponse(response, error_msg);
+        }
+        else
+        {
+            msg_Build_ErrorResponse(response, "Failed to submit reply");
+        }
     }
     else
     {
-        sprintf(error_msg, "Client attempted to reply to article \"%u\" which does not exist", response_id);
-        msg_Build_ErrorResponse(response, error_msg);
+        msg_Build_ReplyResponse(response);
     }
 
     // send response
