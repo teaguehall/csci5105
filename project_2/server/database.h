@@ -10,6 +10,13 @@ typedef struct ArticleNode
 
 } ArticleNode;
 
+typedef struct ArticleDatabase
+{
+    int version;
+    ArticleNode articles[MAX_ARTICLES];
+
+} ArticleDatabase;
+
 // client functions
 int db_Post(char* author, char* title, char* contents, int* out_err_db_full);
 int db_Reply(int parent_id, char* author, char* contents, int* out_err_db_full, int* out_err_invalid_id);

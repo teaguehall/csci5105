@@ -5,8 +5,8 @@
 #include <string.h>
 
 
+ArticleDatabase db;
 
-ArticleNode db[MAX_ARTICLES];
 pthread_mutex_t db_lock = PTHREAD_MUTEX_INITIALIZER;
 static int db_count = 0; // current number of articles
 
@@ -42,15 +42,15 @@ int db_Post(char* author, char* title, char* contents, int* out_err_db_full)
     // find the previous "last article" and set it to point at the new article
     for(int i = 0; i < db_count; i++)
     {
-        if(db[i].next == -1)
+        if(db.articles[i].next == -1)
         {
-            db[i].next = node.article.id;
+            db.articles[i].next = node.article.id;
             break;
         }
     }
 
     // copy article into array
-    db[node.article.id] = node;
+    db.articles[node.article.id] = node;
     
     // unlock mutex
     exit:
@@ -77,9 +77,9 @@ int db_Read(int* out_count, Article* out_articles)
     // write article outputs in sorted order
     for(int i = 0; i < db_count; i++)
     {       
-        memcpy(out_articles + i, &(db[next].article), sizeof(db[next].article));
+        memcpy(out_articles + i, &(db.articles[next].article), sizeof(db.articles[next].article));
         
-        next = db[next].next; // update read position to next
+        next = db.articles[next].next; // update read position to next
         (*out_count)++;
     }
     
@@ -118,7 +118,7 @@ int db_Reply(int parent_id, char* author, char* contents, int* out_err_db_full, 
     // verify parent id is present in database
     for(i = 0; i < db_count; i++)
     {
-        if(db[i].article.id == parent_id)
+        if(db.articles[i].article.id == parent_id)
         {
             parent_index = i;
             break;
@@ -133,14 +133,14 @@ int db_Reply(int parent_id, char* author, char* contents, int* out_err_db_full, 
     }
 
     // build response title 
-    sprintf(title, "RE: %s", db[parent_index].article.title);
+    sprintf(title, "RE: %s", db.articles[parent_index].article.title);
 
     // build article node
     ArticleNode node;
 
     node.article.id = db_count;
     node.article.parent_id = parent_id;
-    node.article.depth = db[parent_index].article.depth + 1;
+    node.article.depth = db.articles[parent_index].article.depth + 1;
     strcpy(node.article.author, author);
     strcpy(node.article.title, title);
     strcpy(node.article.contents, contents);
@@ -148,7 +148,7 @@ int db_Reply(int parent_id, char* author, char* contents, int* out_err_db_full, 
     // scan database backward to check if there are any other child responses to the parent id already
     for(i = (db_count - 1); i >= 0; i--)
     {        
-        if(db[i].article.parent_id == parent_id)
+        if(db.articles[i].article.parent_id == parent_id)
         {
             child_index = i;
             break;
@@ -159,20 +159,20 @@ int db_Reply(int parent_id, char* author, char* contents, int* out_err_db_full, 
     if(child_index != -1) // indicates there is already a response to what we're responding to
     {
         printf("Previous reply found\n");
-        saved_next = db[child_index].next;
-        db[child_index].next = node.article.id;
+        saved_next = db.articles[child_index].next;
+        db.articles[child_index].next = node.article.id;
         node.next = saved_next;
     }
     else // indicates were the first response
     {
         printf("No previous reply found\n");
-        saved_next = db[parent_index].next;
-        db[parent_index].next = node.article.id;
+        saved_next = db.articles[parent_index].next;
+        db.articles[parent_index].next = node.article.id;
         node.next = saved_next;
     }
 
     // copy article into array
-    db[db_count++] = node;
+    db.articles[db_count++] = node;
 
     // unlock mutex
     exit:
@@ -198,9 +198,9 @@ int db_Choose(int article_id, Article* out_article, int* out_err_invalid_id)
     // find article
     for(int i = 0; i < db_count; i++)
     {
-        if(db[i].article.id == article_id)
+        if(db.articles[i].article.id == article_id)
         {
-            *out_article = db[i].article;
+            *out_article = db.articles[i].article;
             found = 1;
             break;
         }
