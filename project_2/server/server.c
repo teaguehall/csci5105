@@ -6,24 +6,23 @@
 
 #include "handler_client.h"
 #include "coordinate.h"
+#include "file.h"
 
 #include "../shared/tcp.h"
 #include "../shared/msg.h"
 #include "../shared/article.h"
 
-
+ServerGroup server_group;
 
 int main(int argc, char * argv[])
 {
     // verify number of input arguments
-    if(argc < 5 || argc > 5)
+    if(argc < 3 || argc > 3)
     {
         fprintf(stderr, "\n");
         fprintf(stderr, "EROR: Unexpected number of input arguments received. Expected:\n");
         fprintf(stderr, " * REQUIRED: Server Listening Address (xxx.xxx.xxx.xxx)\n");
         fprintf(stderr, " * REQUIRED: Server Listening Port\n");
-        fprintf(stderr, " * REQUIRED: Coordinator Server Address\n");
-        fprintf(stderr, " * REQUIRED: Coordinator Server Port\n");
         fprintf(stderr, "\n");
 
         exit(EXIT_FAILURE);
@@ -43,17 +42,10 @@ int main(int argc, char * argv[])
         exit(EXIT_FAILURE);
     }
 
-    // validate coordinator address
-    if(!tcp_IpAddrIsValid(argv[3]))
+    // parse server group file
+    if(file_ParseServerGroup("./config.txt", &server_group))
     {
-        fprintf(stderr, "ERROR: Invalid coordinator server address %s provided\n", argv[3]);
-        exit(EXIT_FAILURE);
-    }
-
-    // validate coordinator port
-    if(!tcp_PortIsValid(atoi(argv[4])))
-    {
-        fprintf(stderr, "ERROR: Invalid coordinator server port %s provided\n", argv[4]);
+        fprintf(stderr, "ERROR: Error occurred while parsing server group config file.");
         exit(EXIT_FAILURE);
     }
     
