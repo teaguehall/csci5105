@@ -13,9 +13,15 @@
 #include "../shared/article.h"
 
 ServerGroup server_group;
+int is_coordinator;
 
 int main(int argc, char * argv[])
 {
+    int listener_socket = -1;
+    int remote_socket = -1;
+    char remote_addr[128];
+    int remote_port;
+    
     // verify number of input arguments
     if(argc < 3 || argc > 3)
     {
@@ -48,6 +54,104 @@ int main(int argc, char * argv[])
         fprintf(stderr, "ERROR: Error occurred while parsing server group config file.");
         exit(EXIT_FAILURE);
     }
+
+    // determine if we are the coordinator
+    if(strcmp(argv[1], server_group.primary.address) == 0 && atoi(argv[2]) == server_group.primary.port)
+    {
+        printf("we ARE the coordinator\n");
+        is_coordinator = 1;
+    }
+    else
+    {
+        printf("we ARE NOT the coordinator\n");
+        is_coordinator = 0;
+    }
+
+    // accept connections forever
+    while(1)
+    {
+        // accept connection
+        if(tcp_Accept(listener_socket, remote_addr, &remote_port, &remote_socket))
+        {
+            printf("ERROR occurred while accepting connection\n");
+            tcp_Disconnect(remote_socket);
+            continue;
+        }
+
+        // off load to connection handler
+    }
+
+
+
+
+    // accept connections
+    while(1)
+    {        
+        // accept connection
+        if(tcp_Accept(listener_socket, remote_addr, &remote_port, &remote_socket))
+        {
+            printf("ERROR occurred while accepting connection\n");
+            tcp_Disconnect(remote_socket);
+            continue;
+        }
+
+        // wait for header
+        if(tcp_Recv(remote_socket, recv_msg, MSG_HEADER_OFFSET, 5))
+        {
+            printf("ERROR occurred while receiving message header\n");
+            tcp_Disconnect(remote_socket);
+            continue;
+        }
+
+        // extract message header info
+        if(msg_Parse_Header(recv_msg, &msg_recv_type, &msg_recv_id, &msg_recv_size))
+        {
+            printf("Server received invalid header from client\n");
+            tcp_Disconnect(remote_socket);
+            continue;
+        }
+
+        // read rest of message
+        if(tcp_Recv(remote_socket, recv_msg + MSG_HEADER_OFFSET, msg_recv_size, 5))
+        {
+            printf("ERROR occurred while receiving message body\n");
+            tcp_Disconnect(remote_socket);
+            continue;
+        }
+
+        // handle rest of message depending on type
+        switch(msg_recv_type)
+        {
+            case MSG_TYPE_POST_REQUEST :
+                handlePostRequest(remote_socket, recv_msg);
+                break;
+            case MSG_TYPE_READ_REQUEST :
+                handleReadRequest(remote_socket, recv_msg);
+                break;
+            case MSG_TYPE_CHOOSE_REQUEST :
+                handleChooseRequest(remote_socket, recv_msg);
+                break;
+            case MSG_TYPE_REPLY_REQUEST :
+                handleReplyRequest(remote_socket, recv_msg);
+                break;
+            default:
+                fprintf(stderr, "ERROR: Server received unrecognized message\n");
+                continue;
+        }
+
+        // disconnect from client
+        tcp_Disconnect(remote_socket);
+
+    }
+
+
+
+
+
+
+
+
+
     
     // copy args to client info object
     ClientHandlerInfo client_handler_info;

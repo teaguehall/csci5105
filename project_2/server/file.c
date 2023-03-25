@@ -1,15 +1,20 @@
+// this entire function is trash but is good enough
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
 #include "file.h"
+#include "../shared/tcp.h"
 
 // parses file to fill out server group struct. 
 int file_ParseServerGroup(char* file_path, ServerGroup* out_group)
 {
     char line[1024];
+    char str_address[1024];
+    char str_port[1024];
     int error = 0;
-    int colon_found;
+    int colon_found, colon_pos;
 
     FILE* file;
 
@@ -67,8 +72,11 @@ int file_ParseServerGroup(char* file_path, ServerGroup* out_group)
         // find colon
         for(int i = 0; i < strlen(line); i++)
         {
-            if(line[i] = ':')
+            if(line[i] == ':')
+            {
                 colon_found = 1;
+                colon_pos = i;
+            }
         }
 
         if(!colon_found)
@@ -78,14 +86,48 @@ int file_ParseServerGroup(char* file_path, ServerGroup* out_group)
             goto exit; 
         }
 
+        // zero out port and address strings 
+        memset(str_address, 0, sizeof(str_address));
+        memset(str_port, 0, sizeof(str_port));
+
+        // copy over address and port
+        memcpy(str_address, line, colon_pos);
+        memcpy(str_port, line + colon_pos + 1, strlen(line) - colon_pos);
+
         // validate address
+        if(!tcp_IpAddrIsValid(str_address))
+        {
+            fprintf(stderr, "ERROR: Invalid file configuration. Bad server address \"%s\" found in \"%s\"\n", str_address, line);
+            error = -1;
+            goto exit; 
+        }
 
         // validate port
+        if(!tcp_PortIsValid(atoi(str_port)))
+        {
+            fprintf(stderr, "ERROR: Invalid file configuration. Bad server port \"%s\" found in \"%s\"\n", str_port, line);
+            error = -1;
+            goto exit; 
+        }
 
-        // copy address 
-        
-        
-        printf("%s", line);
+        // write server and port to output
+        if(out_group->server_count == 0)
+        {
+            printf("wrote primary %s:%s\n", str_address, str_port);
+            
+            strcpy(out_group->primary.address, str_address);
+            out_group->primary.port = atoi(str_port);
+        }
+        else
+        {
+            printf("wrote other %s:%s\n", str_address, str_port);
+            
+            strcpy(out_group->others[out_group->server_count - 1].address, str_address);
+            out_group->others[out_group->server_count - 1].port = atoi(str_port);
+        }
+
+        // increment server count
+        out_group->server_count++;
     }
 
     // close file
