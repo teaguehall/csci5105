@@ -9,8 +9,10 @@ int net_SendRecv(ServerInfo server, char* msg_send, char* msg_recv)
     int _socket = -1;
     
     uint32_t msg_send_size;
+    int32_t msg_send_id;
     uint32_t msg_send_type;
     uint32_t msg_recv_size;
+    int32_t msg_recv_id;
     uint32_t msg_recv_type;
     
     // connect to server
@@ -21,7 +23,7 @@ int net_SendRecv(ServerInfo server, char* msg_send, char* msg_recv)
     }
 
     // calculate message size (contents + header)
-    if(msg_Parse_Header(msg_send, &msg_send_type, &msg_send_size))
+    if(msg_Parse_Header(msg_send, &msg_send_type, &msg_send_id, &msg_send_size))
     {
         fprintf(stderr, "ERROR: Attempted to send invalid message header to server\n");
     }
@@ -42,7 +44,7 @@ int net_SendRecv(ServerInfo server, char* msg_send, char* msg_recv)
     }
 
     // parse recv header
-    if(msg_Parse_Header(msg_recv, &msg_recv_type, &msg_recv_size))
+    if(msg_Parse_Header(msg_recv, &msg_recv_type, &msg_recv_id, &msg_recv_size))
     {
         fprintf(stderr, "ERROR: Invalid message header received from server\n");
         return -1; 

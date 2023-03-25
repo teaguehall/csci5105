@@ -5,15 +5,16 @@
 
 typedef struct ArticleNode
 {
-    Article article;
     int next;
-
+    Article article;
+    
 } ArticleNode;
 
 typedef struct ArticleDatabase
 {
     int version;
-    ArticleNode articles[MAX_ARTICLES];
+    int article_count;
+    ArticleNode nodes[MAX_ARTICLES];
 
 } ArticleDatabase;
 

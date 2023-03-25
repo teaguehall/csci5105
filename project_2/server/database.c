@@ -4,11 +4,9 @@
 #include <stdio.h>
 #include <string.h>
 
-
-ArticleDatabase db;
+static ArticleDatabase db;
 
 pthread_mutex_t db_lock = PTHREAD_MUTEX_INITIALIZER;
-static int db_count = 0; // current number of articles
 
 // posts article to database. returns the article ID if successful, otherwise returns -1
 int db_Post(char* author, char* title, char* contents, int* out_err_db_full)
@@ -20,7 +18,7 @@ int db_Post(char* author, char* title, char* contents, int* out_err_db_full)
     if(pthread_mutex_lock(&db_lock) != 0) {fprintf(stderr, "ERROR: Failed to lock article database mutex. %s", strerror(errno)); return -1;}
 
     // make sure database isn't full
-    if(db_count >= MAX_ARTICLES)
+    if(db.article_count >= MAX_ARTICLES)
     {
         fprintf(stderr, "ERROR: Client attempted to post article to database that is full.\n");
         *out_err_db_full = 1;
@@ -31,7 +29,7 @@ int db_Post(char* author, char* title, char* contents, int* out_err_db_full)
     // build article node
     ArticleNode node;
 
-    node.article.id = db_count++;
+    node.article.id = (db.article_count)++;
     node.article.parent_id = -1; // -1 indicates no parent
     node.article.depth = 0;
     strcpy(node.article.author, author);
@@ -40,17 +38,17 @@ int db_Post(char* author, char* title, char* contents, int* out_err_db_full)
     node.next = -1; // indicate this is the last article
 
     // find the previous "last article" and set it to point at the new article
-    for(int i = 0; i < db_count; i++)
+    for(int i = 0; i < db.article_count; i++)
     {
-        if(db.articles[i].next == -1)
+        if(db.nodes[i].next == -1)
         {
-            db.articles[i].next = node.article.id;
+            db.nodes[i].next = node.article.id;
             break;
         }
     }
 
     // copy article into array
-    db.articles[node.article.id] = node;
+    db.nodes[node.article.id] = node;
     
     // unlock mutex
     exit:
@@ -75,11 +73,11 @@ int db_Read(int* out_count, Article* out_articles)
     if(pthread_mutex_lock(&db_lock) != 0) {fprintf(stderr, "ERROR: Failed to lock article database mutex. %s", strerror(errno)); return -1;}
 
     // write article outputs in sorted order
-    for(int i = 0; i < db_count; i++)
+    for(int i = 0; i < db.article_count; i++)
     {       
-        memcpy(out_articles + i, &(db.articles[next].article), sizeof(db.articles[next].article));
+        memcpy(out_articles + i, &(db.nodes[next].article), sizeof(db.nodes[next].article));
         
-        next = db.articles[next].next; // update read position to next
+        next = db.nodes[next].next; // update read position to next
         (*out_count)++;
     }
     
@@ -107,7 +105,7 @@ int db_Reply(int parent_id, char* author, char* contents, int* out_err_db_full, 
     if(pthread_mutex_lock(&db_lock) != 0) {fprintf(stderr, "ERROR: Failed to lock article database mutex. %s", strerror(errno)); return -1;}
 
     // make sure database isn't full
-    if(db_count >= MAX_ARTICLES)
+    if(db.article_count >= MAX_ARTICLES)
     {
         fprintf(stderr, "ERROR: Client attempted to reply to article when database is already full.\n");
         *out_err_db_full = 1;
@@ -116,9 +114,9 @@ int db_Reply(int parent_id, char* author, char* contents, int* out_err_db_full, 
     }
 
     // verify parent id is present in database
-    for(i = 0; i < db_count; i++)
+    for(i = 0; i < db.article_count; i++)
     {
-        if(db.articles[i].article.id == parent_id)
+        if(db.nodes[i].article.id == parent_id)
         {
             parent_index = i;
             break;
@@ -133,22 +131,22 @@ int db_Reply(int parent_id, char* author, char* contents, int* out_err_db_full, 
     }
 
     // build response title 
-    sprintf(title, "RE: %s", db.articles[parent_index].article.title);
+    sprintf(title, "RE: %s", db.nodes[parent_index].article.title);
 
     // build article node
     ArticleNode node;
 
-    node.article.id = db_count;
+    node.article.id = db.article_count;
     node.article.parent_id = parent_id;
-    node.article.depth = db.articles[parent_index].article.depth + 1;
+    node.article.depth = db.nodes[parent_index].article.depth + 1;
     strcpy(node.article.author, author);
     strcpy(node.article.title, title);
     strcpy(node.article.contents, contents);
 
     // scan database backward to check if there are any other child responses to the parent id already
-    for(i = (db_count - 1); i >= 0; i--)
+    for(i = (db.article_count - 1); i >= 0; i--)
     {        
-        if(db.articles[i].article.parent_id == parent_id)
+        if(db.nodes[i].article.parent_id == parent_id)
         {
             child_index = i;
             break;
@@ -159,20 +157,20 @@ int db_Reply(int parent_id, char* author, char* contents, int* out_err_db_full, 
     if(child_index != -1) // indicates there is already a response to what we're responding to
     {
         printf("Previous reply found\n");
-        saved_next = db.articles[child_index].next;
-        db.articles[child_index].next = node.article.id;
+        saved_next = db.nodes[child_index].next;
+        db.nodes[child_index].next = node.article.id;
         node.next = saved_next;
     }
     else // indicates were the first response
     {
         printf("No previous reply found\n");
-        saved_next = db.articles[parent_index].next;
-        db.articles[parent_index].next = node.article.id;
+        saved_next = db.nodes[parent_index].next;
+        db.nodes[parent_index].next = node.article.id;
         node.next = saved_next;
     }
 
     // copy article into array
-    db.articles[db_count++] = node;
+    db.nodes[db.article_count++] = node;
 
     // unlock mutex
     exit:
@@ -196,11 +194,11 @@ int db_Choose(int article_id, Article* out_article, int* out_err_invalid_id)
     if(pthread_mutex_lock(&db_lock) != 0) {fprintf(stderr, "ERROR: Failed to lock article database mutex. %s", strerror(errno)); return -1;}
 
     // find article
-    for(int i = 0; i < db_count; i++)
+    for(int i = 0; i < db.article_count; i++)
     {
-        if(db.articles[i].article.id == article_id)
+        if(db.nodes[i].article.id == article_id)
         {
-            *out_article = db.articles[i].article;
+            *out_article = db.nodes[i].article;
             found = 1;
             break;
         }

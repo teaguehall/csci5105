@@ -1,13 +1,45 @@
 #include "msg.h"
 #include <string.h>
 #include <arpa/inet.h>
+#include <pthread.h>
+#include <errno.h>
+
+pthread_mutex_t next_id_lock = PTHREAD_MUTEX_INITIALIZER;
+
+int32_t msg_GetNextID(void)
+{
+    static int32_t id = 0;
+    int32_t id_copy;
+    
+    // lock mutex
+    if(pthread_mutex_lock(&next_id_lock) != 0) {fprintf(stderr, "ERROR: Failed to lock msg build mutex. %s", strerror(errno)); return -1;}
+
+    id_copy = id++;
+
+    // unlock mutex
+    if(pthread_mutex_unlock(&next_id_lock) != 0) {fprintf(stderr, "ERROR: Failed to unlock msg build mutex. %s", strerror(errno)); return -1;}
+
+    return id_copy;
+}
+
+int msg_GetID(char* msg)
+{
+    uint32_t type = 0;
+    int32_t id = 0;
+    uint32_t size = 0;
+    
+    msg_Parse_Header(msg, &type, &id, &size);
+
+    return (size + MSG_HEADER_OFFSET);
+}
 
 size_t msg_GetActualSize(char* msg)
 {
     uint32_t type = 0;
+    int32_t id = 0;
     uint32_t size = 0;
     
-    msg_Parse_Header(msg, &type, &size);
+    msg_Parse_Header(msg, &type, &id, &size);
 
     return (size + MSG_HEADER_OFFSET);
 }
@@ -21,19 +53,23 @@ int msg_Build_Header(char* out_msg, uint32_t type,  uint32_t size)
     // write message type
     (*(uint32_t*)(out_msg + 4)) = htonl(type);
 
+    // write message ID
+    (*(uint32_t*)(out_msg + 8)) = htonl(msg_GetNextID());
+
     // write message size (excludes size of header itself)
-    (*(uint32_t*)(out_msg + 8)) = htonl(size);
+    (*(uint32_t*)(out_msg + 12)) = htonl(size);
 
     // success
     return 0;
 }
 
 // Parse message header. Returns 0 on success, -1 on error
-int msg_Parse_Header(char* in_msg, uint32_t* out_type, uint32_t* out_size)
+int msg_Parse_Header(char* in_msg, uint32_t* out_type, int32_t* out_id, uint32_t* out_size)
 {
     uint32_t magic = ntohl(*((uint32_t*)in_msg));
     *out_type = ntohl(*(uint32_t*)(in_msg + 4));
-    *out_size = ntohl(*(uint32_t*)(in_msg + 8));
+    *out_id = ntohl(*(int32_t*)(in_msg + 8));
+    *out_size = ntohl(*(uint32_t*)(in_msg + 12));
 
     // validate header
     if(magic != MSG_MAGIC_NUMBER)
@@ -66,9 +102,10 @@ int msg_Build_ErrorResponse(char* out_msg, char* in_err_string)
 int msg_Parse_ErrorResponse(char* in_msg, char* out_error_msg)
 {
     uint32_t msg_type, msg_size;
-    
+    int32_t msg_id;
+
     // validate header
-    if(msg_Parse_Header(in_msg, &msg_type, &msg_size))
+    if(msg_Parse_Header(in_msg, &msg_type, &msg_id, &msg_size))
     {
         fprintf(stderr, "ERROR: Invalid header found while parsing MSG_TYPE_ERROR_RESPONSE message\n");
         return -1;
@@ -116,10 +153,11 @@ int msg_Build_PostRequest(char* out_msg, char* in_author, char* in_title, char* 
 int msg_Parse_PostRequest(char* in_msg, char* out_author, char* out_title, char* out_contents)
 {
     uint32_t msg_type, msg_size;
+    int32_t msg_id;
     uint32_t bytes_read = 0;
 
     // validate header
-    if(msg_Parse_Header(in_msg, &msg_type, &msg_size))
+    if(msg_Parse_Header(in_msg, &msg_type, &msg_id, &msg_size))
     {
         fprintf(stderr, "ERROR: Invalid header found while parsing MSG_TYPE_POST_REQUEST message\n");
         return -1;
@@ -151,7 +189,7 @@ int msg_Parse_PostRequest(char* in_msg, char* out_author, char* out_title, char*
 int msg_Build_PostResponse(char* out_msg)
 {
     // write header
-    msg_Build_Header(out_msg, MSG_TYPE_POST_RESPONSE,  0);
+    msg_Build_Header(out_msg, MSG_TYPE_POST_RESPONSE, 0);
 
     // success
     return 0;      
@@ -177,10 +215,11 @@ int msg_Build_ReadRequest(char* out_msg, uint32_t max_articles)
 int msg_Parse_ReadRequest(char* in_msg, uint32_t* out_max_articles)
 {
     uint32_t msg_type, msg_size;
+    int32_t msg_id;
     uint32_t bytes_read = 0;
 
     // validate header
-    if(msg_Parse_Header(in_msg, &msg_type, &msg_size))
+    if(msg_Parse_Header(in_msg, &msg_type, &msg_id, &msg_size))
     {
         fprintf(stderr, "ERROR: Invalid header found while parsing MSG_TYPE_READ_REQUEST message\n");
         return -1;
@@ -250,10 +289,11 @@ int msg_Build_ReadResponse(char* out_msg, int article_count, Article articles[])
 int msg_Parse_ReadResponse(char* in_msg, uint32_t* out_article_count, Article out_articles[])
 {
     uint32_t msg_type, msg_size;
+    int32_t msg_id;
     uint32_t bytes_read = 0;
 
     // validate header
-    if(msg_Parse_Header(in_msg, &msg_type, &msg_size))
+    if(msg_Parse_Header(in_msg, &msg_type, &msg_id, &msg_size))
     {
         fprintf(stderr, "ERROR: Invalid header found while parsing MSG_TYPE_READ_RESPONSE message\n");
         return -1;
@@ -322,10 +362,11 @@ int msg_Build_ChooseRequest(char* out_msg, uint32_t article_id)
 int msg_Parse_ChooseRequest(char* in_msg, uint32_t* out_article_id)
 {
     uint32_t msg_type, msg_size;
+    int32_t msg_id;
     uint32_t bytes_read = 0;
 
     // validate header
-    if(msg_Parse_Header(in_msg, &msg_type, &msg_size))
+    if(msg_Parse_Header(in_msg, &msg_type, &msg_id, &msg_size))
     {
         fprintf(stderr, "ERROR: Invalid header found while parsing MSG_TYPE_CHOOSE_REQUEST message\n");
         return -1;
@@ -386,10 +427,11 @@ int msg_Build_ChooseResponse(char* out_msg, Article article)
 int msg_Parse_ChooseResponse(char* in_msg, Article* out_article)
 {
     uint32_t msg_type, msg_size;
+    int32_t msg_id;
     uint32_t bytes_read = 0;
 
     // validate header
-    if(msg_Parse_Header(in_msg, &msg_type, &msg_size))
+    if(msg_Parse_Header(in_msg, &msg_type, &msg_id, &msg_size))
     {
         fprintf(stderr, "ERROR: Invalid header found while parsing MSG_TYPE_CHOOSE_RESPONSE message\n");
         return -1;
@@ -458,10 +500,11 @@ int msg_Build_ReplyRequest(char* out_msg, uint32_t article_id, char* author, cha
 int msg_Parse_ReplyRequest(char* in_msg, uint32_t* out_article_id, char* out_author, char* out_contents)
 {
     uint32_t msg_type, msg_size;
+    int32_t msg_id;
     uint32_t bytes_read = 0;
 
     // validate header
-    if(msg_Parse_Header(in_msg, &msg_type, &msg_size))
+    if(msg_Parse_Header(in_msg, &msg_type, &msg_id, &msg_size))
     {
         fprintf(stderr, "ERROR: Invalid header found while parsing MSG_TYPE_REPLY_REQUEST message\n");
         return -1;

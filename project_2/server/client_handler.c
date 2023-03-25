@@ -176,6 +176,7 @@ static void handleReplyRequest(int socket, char* msg_rcvd)
 void* funcClientHandler(void *vargp)
 {
     uint32_t msg_recv_type;
+    int32_t msg_recv_id;
     uint32_t msg_recv_size;
     
     int listener_socket = -1;
@@ -216,7 +217,7 @@ void* funcClientHandler(void *vargp)
         }
 
         // extract message header info
-        if(msg_Parse_Header(recv_msg, &msg_recv_type, &msg_recv_size))
+        if(msg_Parse_Header(recv_msg, &msg_recv_type, &msg_recv_id, &msg_recv_size))
         {
             printf("Server received invalid header from client\n");
             tcp_Disconnect(remote_socket);

@@ -5,17 +5,24 @@
     #include <stdio.h>
     #include <stdint.h>
     #include "article.h"
+    //#include "../server/database.h"
 
+    // util functions
     size_t msg_GetActualSize(char* msg);
-
-    // message parsing and building functions
-    int msg_Build_Header(char* out_msg, uint32_t type,  uint32_t size);
-    int msg_Parse_Header(char* in_msg, uint32_t* out_type, uint32_t* out_size);
+    int msg_Build_Header(char* out_msg, uint32_t type, uint32_t size);
+    int msg_Parse_Header(char* in_msg, uint32_t* out_type, int32_t* out_id, uint32_t* out_size);
+    
+    // client-server AND server-server functions 
     int msg_Build_ErrorResponse(char* out_msg, char* in_err_string);
     int msg_Parse_ErrorResponse(char* in_msg, char* out_error_msg);
     int msg_Build_PostRequest(char* out_msg, char* in_author, char* in_title, char* in_contents);
     int msg_Parse_PostRequest(char* in_msg, char* out_author, char* out_title, char* out_contents);
     int msg_Build_PostResponse(char* out_msg);
+    int msg_Build_ReplyRequest(char* out_msg, uint32_t article_id, char* author, char* contents);
+    int msg_Parse_ReplyRequest(char* in_msg, uint32_t* out_article_id, char* out_author, char* out_contents);
+    int msg_Build_ReplyResponse(char* out_msg);
+    
+    // client-server ONLY messages
     int msg_Build_ReadRequest(char* out_msg, uint32_t max_articles);
     int msg_Parse_ReadRequest(char* in_msg, uint32_t* out_max_articles);
     int msg_Build_ReadResponse(char* out_msg, int article_count, Article articles[]);
@@ -24,18 +31,16 @@
     int msg_Parse_ChooseRequest(char* in_msg, uint32_t* out_article_id);
     int msg_Build_ChooseResponse(char* out_msg, Article article);
     int msg_Parse_ChooseResponse(char* in_msg, Article* out_articles);
-    int msg_Build_ReplyRequest(char* out_msg, uint32_t article_id, char* author, char* contents);
-    int msg_Parse_ReplyRequest(char* in_msg, uint32_t* out_article_id, char* out_author, char* out_contents);
-    int msg_Build_ReplyResponse(char* out_msg);
-   
+
     #define MSG_MAGIC_NUMBER                0x12AB34CD
-    #define MSG_HEADER_OFFSET               12
+    #define MSG_HEADER_OFFSET               16
 
     #define MSG_TYPE_ERROR_RESPONSE         0x1000
 
     // message structure:
     // - magic number (uint32 4-bytes)
     // - message type (uint32 4-bytes)
+    // - message ID (uint32 4-bytes)
     // - message size (uint32 4-bytes)
     // - error message (null terminated string)
 
@@ -44,6 +49,7 @@
     // message structure:
     // - magic number (uint32 4-bytes)
     // - message type (uint32 4-bytes)
+    // - message ID (uint32 4-bytes)
     // - message size (uint32 4-bytes)
     // - post author (null terminated string)
     // - post title (null terminated string)
@@ -54,6 +60,7 @@
     // message structure:
     // - magic number (uint32 4-bytes)
     // - message type (uint32 4-bytes)
+    // - message ID (uint32 4-bytes)
     // - message size (uint32 4-bytes)
 
     #define MSG_TYPE_READ_REQUEST           0x3000
@@ -61,6 +68,7 @@
     // message structure:
     // - magic number (uint32 4-bytes)
     // - message type (uint32 4-bytes)
+    // - message ID (uint32 4-bytes)
     // - message size (uint32 4-bytes)
     // - page size (uint32 4-bytes)
     // - page number (uint32 4-bytes)
@@ -70,10 +78,12 @@
     // message structure:
     // - magic number (uint32 4-bytes)
     // - message type (uint32 4-bytes)
+    // - message ID (uint32 4-bytes)
     // - message size (uint32 4-bytes)
     // - number of articles (uint32 4-bytes)
     //      - article ID (uint32 4-bytes)
     //      - parent article ID (uint32 4-bytes)
+    //      - article depth (uint32 4-bytes)
     //      - article author (null-terminated string)
     //      - article title (null-terminated string)
     //      - article contents (null-terminated string)
@@ -83,6 +93,7 @@
     // message structure:
     // - magic number (uint32 4-bytes)
     // - message type (uint32 4-bytes)
+    // - message ID (uint32 4-bytes)
     // - message size (uint32 4-bytes)
     // - article ID (uint32 4-bytes)
 
@@ -91,6 +102,7 @@
     // message structure:
     // - magic number (uint32 4-bytes)
     // - message type (uint32 4-bytes)
+    // - message ID (uint32 4-bytes)
     // - message size (uint32 4-bytes)
     // - article ID (uint32 4-bytes)
     // - parent article ID (uint32 4-bytes)
@@ -103,6 +115,7 @@
     // message structure:
     // - magic number (uint32 4-bytes)
     // - message type (uint32 4-bytes)
+    // - message ID (uint32 4-bytes)
     // - message size (uint32 4-bytes)
     // - article ID to reply (uint32 4-bytes)
     // - post author (null terminated string)
@@ -113,6 +126,7 @@
     // message structure:
     // - magic number (uint32 4-bytes)
     // - message type (uint32 4-bytes)
+    // - message ID (uint32 4-bytes)
     // - message size (uint32 4-bytes)
 
 
