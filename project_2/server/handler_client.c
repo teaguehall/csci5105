@@ -5,11 +5,10 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#include "client_handler.h"
+#include "handler_client.h"
 #include "../shared/msg.h"
 #include "../shared/tcp.h"
 #include "database.h"
-
 
 Article articles[MAX_ARTICLES];
 char response[MAX_ARTICLES * sizeof(Article) + MSG_HEADER_OFFSET];      // make response buffer big enough to accomadate largest scenario
