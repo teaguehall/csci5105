@@ -55,34 +55,27 @@ void* connectionHandler(void *vargp)
     }
 
     // handle message
-    //
+    switch(msg_recv_type)
+    {
+        case MSG_TYPE_POST_REQUEST :
+            handlePostRequest(remote_socket, rcvd_msg);
+            break;
+        case MSG_TYPE_READ_REQUEST :
+            handleReadRequest(remote_socket, rcvd_msg);
+            break;
+        case MSG_TYPE_CHOOSE_REQUEST :
+            handleChooseRequest(remote_socket, rcvd_msg);
+            break;
+        case MSG_TYPE_REPLY_REQUEST :
+            handleReplyRequest(remote_socket, rcvd_msg);
+            break;
+        default:
+            fprintf(stderr, "ERROR: Server received unrecognized message\n");
+            return NULL;
+    }
 
     // success
     tcp_Disconnect(remote_socket);
     return NULL;
-
-    // disconnect from client
-        
-
-
-    // handle rest of message depending on type
-    switch(msg_recv_type)
-    {
-        case MSG_TYPE_POST_REQUEST :
-            handlePostRequest(remote_socket, recv_msg);
-            break;
-        case MSG_TYPE_READ_REQUEST :
-            handleReadRequest(remote_socket, recv_msg);
-            break;
-        case MSG_TYPE_CHOOSE_REQUEST :
-            handleChooseRequest(remote_socket, recv_msg);
-            break;
-        case MSG_TYPE_REPLY_REQUEST :
-            handleReplyRequest(remote_socket, recv_msg);
-            break;
-        default:
-            fprintf(stderr, "ERROR: Server received unrecognized message\n");
-            continue;
-    }
 
 }
