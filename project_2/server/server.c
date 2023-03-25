@@ -66,15 +66,15 @@ int main(int argc, char * argv[])
     // copy args to coordinator object
     CoordinatorInfo coordination_info;
 
-    strcpy(coordination_info.coord_address, argv[3]);
-    coordination_info.coord_port = atoi(argv[4]);
+    // TODO
 
-    // if server listening address is the same as the coordinator server address, that means we're the coordinator!
+    //// if server listening address is the same as the coordinator server address, that means we're the coordinator!
+    //int is_coordinator = 0;
+    //if(strcmp(argv[1], argv[3]) == 0 && strcmp(argv[2], argv[4]) == 0)
+    //{
+    //    is_coordinator = 1;
+    //}
     int is_coordinator = 0;
-    if(strcmp(argv[1], argv[3]) == 0 && strcmp(argv[2], argv[4]) == 0)
-    {
-        is_coordinator = 1;
-    }
 
     // spawn inter-server thread (depending on if this server is the coordinator or not)
     pthread_t thread_coordination;
