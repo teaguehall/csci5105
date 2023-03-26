@@ -9,7 +9,7 @@
 #include "handler_request.h"
 #include "../shared/msg.h"
 #include "../shared/tcp.h"
-#include "database.h"
+#include "../shared/database.h"
 #include "server_msg.h"
 #include "file.h"
 

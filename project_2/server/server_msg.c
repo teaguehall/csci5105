@@ -5,7 +5,7 @@
 #include <errno.h>
 #include "../shared/msg.h"
 #include "server_msg.h"
-#include "database.h"
+#include "../shared/database.h"
 
 // Builds MSG_TYPE_DB_PUSH_REQUEST message. Returns 0 on success, -1 on error
 int msg_Build_DbPushRequest(char* out_msg, ArticleDatabase* in_db)

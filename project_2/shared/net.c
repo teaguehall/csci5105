@@ -4,7 +4,7 @@
 #include "../shared/tcp.h"
 
 // sends message to server and receives response. return 0 on success, -1 on error
-int net_SendRecv(ServerInfo server, char* msg_send, char* msg_recv)
+int net_SendRecv(char* address, int port, char* msg_send, char* msg_recv)
 {
     int _socket = -1;
     
@@ -16,9 +16,9 @@ int net_SendRecv(ServerInfo server, char* msg_send, char* msg_recv)
     uint32_t msg_recv_type;
     
     // connect to server
-    if(tcp_Connect(server.address, server.port, &_socket))
+    if(tcp_Connect(address, port, &_socket))
     {
-        fprintf(stderr, "ERROR: Failed to connect to server %s:%d\n", server.address, server.port);
+        fprintf(stderr, "ERROR: Failed to connect to server %s:%d\n", address, port);
         return -1;
     }
 
@@ -77,7 +77,7 @@ int net_SendRecv(ServerInfo server, char* msg_send, char* msg_recv)
     // disconnect from server
     if(tcp_Disconnect(_socket))
     {
-        fprintf(stderr, "ERROR: Failed to disconnect from server %s:%d\n", server.address, server.port);
+        fprintf(stderr, "ERROR: Failed to disconnect from server %s:%d\n", address, port);
         return -1;
     }
 
@@ -86,7 +86,7 @@ int net_SendRecv(ServerInfo server, char* msg_send, char* msg_recv)
 }
 
 // post message to server. returns 0 on success, -1 on error
-int net_Post(ServerInfo server, char* author, char* title, char* contents)
+int net_Post(char* address, int port, char* author, char* title, char* contents)
 {
     char send_msg[4096];
     char recv_msg[4096];
@@ -99,7 +99,7 @@ int net_Post(ServerInfo server, char* author, char* title, char* contents)
     }
 
     // transmit message
-    if(net_SendRecv(server, send_msg, recv_msg))
+    if(net_SendRecv(address, port, send_msg, recv_msg))
     {
         fprintf(stderr, "ERROR: Error occurred while sending POST REQUEST message\n");
         return -1; 
@@ -109,7 +109,7 @@ int net_Post(ServerInfo server, char* author, char* title, char* contents)
     return 0;
 }
 
-int net_Read(ServerInfo server, int max_article_count, unsigned int* out_article_count, Article out_articles[])
+int net_Read(char* address, int port, int max_article_count, unsigned int* out_article_count, Article out_articles[])
 {
     char send_msg[4096];
     char recv_msg[4096];
@@ -122,7 +122,7 @@ int net_Read(ServerInfo server, int max_article_count, unsigned int* out_article
     }
 
     // transmit message
-    if(net_SendRecv(server, send_msg, recv_msg))
+    if(net_SendRecv(address, port, send_msg, recv_msg))
     {
         return -1; 
     }
@@ -138,7 +138,7 @@ int net_Read(ServerInfo server, int max_article_count, unsigned int* out_article
     return 0;
 }
 
-int net_Choose(ServerInfo server, int article_id, Article* out_article)
+int net_Choose(char* address, int port, int article_id, Article* out_article)
 {
     char send_msg[4096];
     char recv_msg[4096];
@@ -151,7 +151,7 @@ int net_Choose(ServerInfo server, int article_id, Article* out_article)
     }
 
     // transmit message
-    if(net_SendRecv(server, send_msg, recv_msg))
+    if(net_SendRecv(address, port, send_msg, recv_msg))
     {
         fprintf(stderr, "ERROR: Error occurred while sending READ REQUEST message\n");
         return -1; 
@@ -168,7 +168,7 @@ int net_Choose(ServerInfo server, int article_id, Article* out_article)
     return 0;
 }
 
-int net_Reply(ServerInfo server, int article, char* author, char* contents)
+int net_Reply(char* address, int port, int article, char* author, char* contents)
 {
     char send_msg[4096];
     char recv_msg[4096];
@@ -181,7 +181,7 @@ int net_Reply(ServerInfo server, int article, char* author, char* contents)
     }
 
     // transmit message
-    if(net_SendRecv(server, send_msg, recv_msg))
+    if(net_SendRecv(address, port, send_msg, recv_msg))
     {
         return -1;
     }

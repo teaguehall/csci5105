@@ -8,7 +8,8 @@
 #include "handler_request.h"
 #include "../shared/msg.h"
 #include "../shared/tcp.h"
-#include "database.h"
+#include "../shared/database.h"
+#include "../shared/net.h"
 
 extern int is_coordinator;
 
@@ -35,39 +36,45 @@ void handlePostRequest(ServerGroup* server_group, int socket, char* msg_rcvd)
     // sequential consistency
     if(server_group->protocol == PROTOCOL_SEQUENTIAL)
     {
-        // if we're the coordinator, update our database
+        // if we're the coordinator, update our database and then push update to all other replicas
         if(is_coordinator)
         {
             // post to database
-            db_Post(author, title, contents, &db_full);
+            if(db_Post(author, title, contents, &db_full))
+            {
+                msg_Build_ErrorResponse(response, "Primary database is full...");
+                goto send_response;
+            }
 
+            // push updated database to all other replicas
+            for(int i = 0; i < server_group->server_count - 1; i++)
+            {
+
+            }
+            
             // TODO
             
             // push database to all other replicas
             //for(int i = 0; )
 
+            msg_Build_PostResponse(response);
+
+        }
+        else // if we're NOT the coordinator, forward message to the coordinator
+        {
+            if(net_Post(server_group->primary.address, server_group->primary.port, author, title, contents))
+            {
+                msg_Build_ErrorResponse(response, "Post request failed to commit to coordinator server...");
+            }
+            else // successfully contacted coordinator server
+            {
+                msg_Build_PostResponse(response);
+            }
         }
     }
-    else
-    {
-
-    }
-
-    // TODO - implement consistency!!!
-    // post article into database 
-    if(db_Post(author, title, contents, &db_full) == -1)
-    {
-        if(db_full)
-        {
-            msg_Build_ErrorResponse(response, "Database full.");
-        } 
-    }
-    else
-    {
-        msg_Build_PostResponse(response);
-    }
-
+    
     // send response
+    send_response:
     if(tcp_Send(socket, response, msg_GetActualSize(response), 5))
     {
         fprintf(stderr, "ERROR: Failed to send POST RESPONSE\n");

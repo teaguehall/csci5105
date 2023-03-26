@@ -174,7 +174,7 @@ int db_Reply(int parent_id, char* author, char* contents, int* out_err_db_full, 
 
     // unlock mutex
     exit:
-    if(pthread_mutex_unlock(&db_lock) != 0) {fprintf(stderr, "ERROR: Failed to lock article database mutex. %s", strerror(errno)); return -1;}
+    if(pthread_mutex_unlock(&db_lock) != 0) {fprintf(stderr, "ERROR: Failed to unlock article database mutex. %s", strerror(errno)); return -1;}
 
     // return error or article ID
     if(error)
@@ -214,11 +214,43 @@ int db_Choose(int article_id, Article* out_article, int* out_err_invalid_id)
     
     // unlock mutex
     exit:
-    if(pthread_mutex_unlock(&db_lock) != 0) {fprintf(stderr, "ERROR: Failed to lock article database mutex. %s", strerror(errno)); return -1;}
+    if(pthread_mutex_unlock(&db_lock) != 0) {fprintf(stderr, "ERROR: Failed to unlock article database mutex. %s", strerror(errno)); return -1;}
 
     // return error or article ID
     if(error)
         return error;
     else
         return 0;
+}
+
+// makes backup of database
+int db_Backup(ArticleDatabase* out_database)
+{
+    // lock mutex
+    if(pthread_mutex_lock(&db_lock) != 0) {fprintf(stderr, "ERROR: Failed to lock article database mutex. %s", strerror(errno)); return -1;}
+
+    // copy db to output
+    memcpy(out_database, &db, sizeof(db));
+
+    // unlock mutex
+    if(pthread_mutex_unlock(&db_lock) != 0) {fprintf(stderr, "ERROR: Failed to unlock article database mutex. %s", strerror(errno)); return -1;}
+
+    // success
+    return 0;
+}
+
+// overwrites database with input
+int db_Restore(ArticleDatabase* in_database)
+{
+    // lock mutex
+    if(pthread_mutex_lock(&db_lock) != 0) {fprintf(stderr, "ERROR: Failed to lock article database mutex. %s", strerror(errno)); return -1;}
+
+    // copy input database to local
+    memcpy(&db, in_database, sizeof(db));
+
+    // unlock mutex
+    if(pthread_mutex_unlock(&db_lock) != 0) {fprintf(stderr, "ERROR: Failed to unlock article database mutex. %s", strerror(errno)); return -1;}
+
+    // success
+    return 0;
 }
