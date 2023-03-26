@@ -14,7 +14,7 @@ config.txt: The server-group consistency model and group IPs are specified in co
 EXAMPLE 1: Sequential consistency using 5 servers with 127.0.0.1:5555 as the primary
 
 SEQUENTIAL
-127.0.0.1:5555  <---- first server is always the primary
+127.0.0.1:5555  <---- first server is always the primary <br />
 127.0.0.1:6666
 127.0.0.1:7777
 127.0.0.1:8888
@@ -37,5 +37,3 @@ READ-YOUR-WRITE
 127.0.0.1:7777
 127.0.0.1:8888
 127.0.0.1:9999
-
-Test Instructions: There is a 
