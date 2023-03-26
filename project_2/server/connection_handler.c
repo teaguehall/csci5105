@@ -5,8 +5,8 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#include "handler_connection.h"
-#include "handler_request.h"
+#include "connection_handler.h"
+#include "msg_handler.h"
 #include "../shared/msg.h"
 #include "../shared/tcp.h"
 #include "../shared/database.h"
@@ -51,30 +51,30 @@ void* connectionHandler(void *vargp)
         return NULL;
     }
 
-    // handle message
+    // send message to handler
     switch(msg_recv_type)
     {
         case MSG_TYPE_POST_REQUEST :
-            handlePostRequest(&server_group, remote_socket, rcvd_msg);
+            msgHandler_PostRequest(&server_group, remote_socket, rcvd_msg);
             break;
         case MSG_TYPE_READ_REQUEST :
-            handleReadRequest(&server_group, remote_socket, rcvd_msg);
+            msgHandler_ReadRequest(&server_group, remote_socket, rcvd_msg);
             break;
         case MSG_TYPE_CHOOSE_REQUEST :
-            handleChooseRequest(&server_group, remote_socket, rcvd_msg);
+            msgHandler_ChooseRequest(&server_group, remote_socket, rcvd_msg);
             break;
         case MSG_TYPE_REPLY_REQUEST :
-            handleReplyRequest(&server_group, remote_socket, rcvd_msg);
+            msgHandler_ReplyRequest(&server_group, remote_socket, rcvd_msg);
             break;
         case MSG_TYPE_DB_PUSH_REQUEST :
-            handleDbPushRequest(&server_group, remote_socket, rcvd_msg);
+            msgHandler_DbPushRequest(&server_group, remote_socket, rcvd_msg);
             break;
         default:
-            fprintf(stderr, "ERROR: Server received unrecognized message\n");
+            fprintf(stderr, "ERROR: Server received unrecognized message %d\n", msg_recv_type);
             return NULL;
     }
 
-    // success
+    // disconnect from client after message was processed
     tcp_Disconnect(remote_socket);
     return NULL;
 

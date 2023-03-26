@@ -4,7 +4,7 @@
 #include <errno.h>
 #include <pthread.h>
 
-#include "handler_connection.h"
+#include "connection_handler.h"
 #include "file.h"
 
 #include "../shared/tcp.h"
@@ -56,20 +56,17 @@ int main(int argc, char * argv[])
         exit(EXIT_FAILURE);
     }
 
-    // determine if we are the coordinator
+    // determine coordinator and print info message to terminal
     if(strcmp(argv[1], server_group.primary.address) == 0 && atoi(argv[2]) == server_group.primary.port)
     {
-        printf("we ARE the coordinator\n");
         is_coordinator = 1;
+        printf("INFO: Starting %s:%s as coordinator server...\n", argv[1], argv[2]);
     }
     else
     {
-        printf("we ARE NOT the coordinator\n");
         is_coordinator = 0;
+        printf("INFO: Starting %s:%s as non-coordinator server...\n", argv[1], argv[2]);
     }
-
-    // print start-up information
-    
 
     // copy info to connection thread input args
     ConnectionHandlerInfo connection_info;

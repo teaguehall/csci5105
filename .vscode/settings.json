@@ -31,6 +31,10 @@
         "string_view": "c",
         "pthread.h": "c",
         "handler_request.h": "c",
-        "tcp.h": "c"
+        "tcp.h": "c",
+        "database.h": "c",
+        "connection_handler.h": "c",
+        "request_handler.h": "c",
+        "msg_handler.h": "c"
     }
 }
