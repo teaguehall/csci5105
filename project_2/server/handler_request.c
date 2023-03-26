@@ -10,6 +10,8 @@
 #include "../shared/tcp.h"
 #include "database.h"
 
+extern int is_coordinator;
+
 Article articles[MAX_ARTICLES];
 char response[MAX_ARTICLES * sizeof(Article) + MSG_HEADER_OFFSET];      // make response buffer big enough to accomadate largest scenario
 
@@ -28,6 +30,27 @@ void handlePostRequest(ServerGroup* server_group, int socket, char* msg_rcvd)
     {
         printf("ERROR while parsing Post request message");
         return;
+    }
+
+    // sequential consistency
+    if(server_group->protocol == PROTOCOL_SEQUENTIAL)
+    {
+        // if we're the coordinator, update our database
+        if(is_coordinator)
+        {
+            // post to database
+            db_Post(author, title, contents, &db_full);
+
+            // TODO
+            
+            // push database to all other replicas
+            //for(int i = 0; )
+
+        }
+    }
+    else
+    {
+
     }
 
     // TODO - implement consistency!!!

@@ -3,8 +3,8 @@
 #include <string.h>
 #include <errno.h>
 
-#include "net.h"
 #include "render.h"
+#include "../shared/net.h"
 #include "../shared/msg.h"
 #include "../shared/article.h"
 #include "../shared/tcp.h"
