@@ -113,15 +113,11 @@ int file_ParseServerGroup(char* file_path, ServerGroup* out_group)
         // write server and port to output
         if(out_group->server_count == 0)
         {
-            printf("wrote primary %s:%s\n", str_address, str_port);
-            
             strcpy(out_group->primary.address, str_address);
             out_group->primary.port = atoi(str_port);
         }
         else
         {
-            printf("wrote other %s:%s\n", str_address, str_port);
-            
             strcpy(out_group->others[out_group->server_count - 1].address, str_address);
             out_group->others[out_group->server_count - 1].port = atoi(str_port);
         }

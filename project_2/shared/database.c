@@ -49,6 +49,7 @@ int db_Post(char* author, char* title, char* contents, int* out_err_db_full)
 
     // copy article into array
     db.nodes[node.article.id] = node;
+    db.version++;
     
     // unlock mutex
     exit:
@@ -171,6 +172,7 @@ int db_Reply(int parent_id, char* author, char* contents, int* out_err_db_full, 
 
     // copy article into array
     db.nodes[db.article_count++] = node;
+    db.version++;
 
     // unlock mutex
     exit:

@@ -10,7 +10,6 @@
 #include "../shared/msg.h"
 #include "../shared/tcp.h"
 #include "../shared/database.h"
-#include "server_msg.h"
 #include "file.h"
 
 void* connectionHandler(void *vargp)
@@ -18,7 +17,7 @@ void* connectionHandler(void *vargp)
     ServerGroup server_group;
     int remote_socket;
 
-    char rcvd_msg[MAX_SERVER_MSG_SIZE];
+    char rcvd_msg[MAX_MSG_SIZE];
     
     uint32_t msg_recv_type;
     int32_t msg_recv_id;
@@ -66,6 +65,9 @@ void* connectionHandler(void *vargp)
             break;
         case MSG_TYPE_REPLY_REQUEST :
             handleReplyRequest(&server_group, remote_socket, rcvd_msg);
+            break;
+        case MSG_TYPE_DB_PUSH_REQUEST :
+            handleDbPushRequest(&server_group, remote_socket, rcvd_msg);
             break;
         default:
             fprintf(stderr, "ERROR: Server received unrecognized message\n");

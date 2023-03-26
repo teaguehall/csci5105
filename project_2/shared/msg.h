@@ -5,7 +5,9 @@
     #include <stdio.h>
     #include <stdint.h>
     #include "article.h"
-    //#include "../server/database.h"
+    #include "database.h"
+
+    #define MAX_MSG_SIZE    (sizeof(ArticleDatabase) + MSG_HEADER_OFFSET) // the biggest server message encapsulates an entire database...
 
     // util functions
     size_t msg_GetActualSize(char* msg);
@@ -31,6 +33,12 @@
     int msg_Parse_ChooseRequest(char* in_msg, uint32_t* out_article_id);
     int msg_Build_ChooseResponse(char* out_msg, Article article);
     int msg_Parse_ChooseResponse(char* in_msg, Article* out_articles);
+
+    // server-server ONLY messages
+    int msg_Build_DbPushRequest(char* out_msg, ArticleDatabase* in_db);
+    int msg_Parse_DbPushRequest(char* in_msg, ArticleDatabase* out_db);
+    int msg_Build_DbPushResponse(char* out_msg);
+
 
     #define MSG_MAGIC_NUMBER                0x12AB34CD
     #define MSG_HEADER_OFFSET               16

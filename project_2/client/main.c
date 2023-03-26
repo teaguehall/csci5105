@@ -60,12 +60,14 @@ int main(int argc, char * argv[])
         exit(EXIT_FAILURE);
     }
     
-    // save server connect info for later use
-    ServerInfo connect_info;
-    strcpy(connect_info.address, argv[2]);
-    connect_info.port = atoi(argv[3]);
+    // save server info 
+    char* server_addr;
+    int server_port;
+    server_addr = argv[2];
+    server_port = atoi(argv[3]);
 
-    render_ClearTerminal(); // always clear terminal to clean up before next output message
+    // clear terminal
+    render_ClearTerminal();
 
     // display message formatting instructions
     printf("--------------------------------------------\n");
@@ -142,7 +144,7 @@ int main(int argc, char * argv[])
             }
 
             // post article to server
-            if(net_Post(connect_info, argv[1], article_title, article_contents))
+            if(net_Post(server_addr, server_port, argv[1], article_title, article_contents))
             {
                 fprintf(stderr, "ERROR: Client failed to POST article\n");
             }
@@ -159,7 +161,7 @@ int main(int argc, char * argv[])
         else if(strncmp(command, "READ", 4) == 0 || strncmp(command, "read", 4) == 0)
         {           
             // send read request to article (we just request all articles from server that will fit into our buffer)
-            if(net_Read(connect_info, MAX_ARTICLES, &articles_read,  article_buffer))
+            if(net_Read(server_addr, server_port, MAX_ARTICLES, &articles_read,  article_buffer))
             {
                 fprintf(stderr, "ERROR: Client failed to READ articles\n");
                 continue;
@@ -195,7 +197,7 @@ int main(int argc, char * argv[])
             }
             
             // send choose request to server
-            if(net_Choose(connect_info, article_id, article_buffer))
+            if(net_Choose(server_addr, server_port, article_id, article_buffer))
             {
                 fprintf(stderr, "ERROR: Client failed to retrieve article from server\n");
                 continue;
@@ -257,7 +259,7 @@ int main(int argc, char * argv[])
             }
 
             // send reply to server
-            if(net_Reply(connect_info, article_id, argv[1], article_contents))
+            if(net_Reply(server_addr, server_port, article_id, argv[1], article_contents))
             {
                 fprintf(stderr, "ERROR: Client failed to submit REPLY to server\n");
             }

@@ -189,3 +189,25 @@ int net_Reply(char* address, int port, int article, char* author, char* contents
     // success
     return 0;
 }
+
+int net_DbPush(char* address, int port, ArticleDatabase* database)
+{
+    char send_msg[MAX_MSG_SIZE];
+    char recv_msg[4096];
+
+    // build message
+    if(msg_Build_DbPushRequest(send_msg, database))
+    {
+        fprintf(stderr, "ERROR: Failed to build DB PUSH REQUEST\n");
+        return -1;
+    }
+
+    // transmit message
+    if(net_SendRecv(address, port, send_msg, recv_msg))
+    {
+        return -1;
+    }
+
+    // success
+    return 0;
+}
