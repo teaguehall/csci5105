@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#include "handler_client.h"
+#include "handler_request.h"
 #include "../shared/msg.h"
 #include "../shared/tcp.h"
 #include "database.h"
@@ -14,7 +14,7 @@ Article articles[MAX_ARTICLES];
 char response[MAX_ARTICLES * sizeof(Article) + MSG_HEADER_OFFSET];      // make response buffer big enough to accomadate largest scenario
 
 // handles post request message from clients
-static void handlePostRequest(int socket, char* msg_rcvd)
+void handlePostRequest(ServerGroup* server_group, int socket, char* msg_rcvd)
 {   
     int db_full;
     
@@ -52,7 +52,7 @@ static void handlePostRequest(int socket, char* msg_rcvd)
 }
 
 // handles read request message from clients
-static void handleReadRequest(int socket, char* msg_rcvd)
+void handleReadRequest(ServerGroup* server_group, int socket, char* msg_rcvd)
 {
     int count;
     
@@ -80,7 +80,7 @@ static void handleReadRequest(int socket, char* msg_rcvd)
 }
 
 // handles choose request message from clients
-static void handleChooseRequest(int socket, char* msg_rcvd)
+void handleChooseRequest(ServerGroup* server_group, int socket, char* msg_rcvd)
 {    
     char error_msg[4096];
     
@@ -124,7 +124,7 @@ static void handleChooseRequest(int socket, char* msg_rcvd)
 }
 
 // handles reply request message from clients
-static void handleReplyRequest(int socket, char* msg_rcvd)
+void handleReplyRequest(ServerGroup* server_group, int socket, char* msg_rcvd)
 {
     char error_msg[4096];
 
@@ -171,92 +171,3 @@ static void handleReplyRequest(int socket, char* msg_rcvd)
         fprintf(stderr, "ERROR: Failed to send POST RESPONSE\n");
     }
 }
-
-void* funcClientHandler(void *vargp)
-{
-    uint32_t msg_recv_type;
-    int32_t msg_recv_id;
-    uint32_t msg_recv_size;
-    
-    int listener_socket = -1;
-    int remote_socket = -1;
-    char remote_addr[128];
-    int remote_port;
-
-    char recv_msg[4096];
-    
-    // cast input args
-    char* listening_addr = ((ClientHandlerInfo*)(vargp))->listening_address;
-    int listening_port = ((ClientHandlerInfo*)(vargp))->listening_port;  
-    
-    // create listener socket
-    if(tcp_CreateListener(listening_addr, listening_port, &listener_socket))
-    {
-        printf("Failed to create listener socket\n");
-        exit(EXIT_FAILURE);
-    }
-    
-    // accept connections
-    while(1)
-    {        
-        // accept connection
-        if(tcp_Accept(listener_socket, remote_addr, &remote_port, &remote_socket))
-        {
-            printf("ERROR occurred while accepting connection\n");
-            tcp_Disconnect(remote_socket);
-            continue;
-        }
-
-        // wait for header
-        if(tcp_Recv(remote_socket, recv_msg, MSG_HEADER_OFFSET, 5))
-        {
-            printf("ERROR occurred while receiving message header\n");
-            tcp_Disconnect(remote_socket);
-            continue;
-        }
-
-        // extract message header info
-        if(msg_Parse_Header(recv_msg, &msg_recv_type, &msg_recv_id, &msg_recv_size))
-        {
-            printf("Server received invalid header from client\n");
-            tcp_Disconnect(remote_socket);
-            continue;
-        }
-
-        // read rest of message
-        if(tcp_Recv(remote_socket, recv_msg + MSG_HEADER_OFFSET, msg_recv_size, 5))
-        {
-            printf("ERROR occurred while receiving message body\n");
-            tcp_Disconnect(remote_socket);
-            continue;
-        }
-
-        // handle rest of message depending on type
-        switch(msg_recv_type)
-        {
-            case MSG_TYPE_POST_REQUEST :
-                handlePostRequest(remote_socket, recv_msg);
-                break;
-            case MSG_TYPE_READ_REQUEST :
-                handleReadRequest(remote_socket, recv_msg);
-                break;
-            case MSG_TYPE_CHOOSE_REQUEST :
-                handleChooseRequest(remote_socket, recv_msg);
-                break;
-            case MSG_TYPE_REPLY_REQUEST :
-                handleReplyRequest(remote_socket, recv_msg);
-                break;
-            default:
-                fprintf(stderr, "ERROR: Server received unrecognized message\n");
-                continue;
-        }
-
-        // disconnect from client
-        tcp_Disconnect(remote_socket);
-
-    }
-
-    // success
-    return NULL;
-}
-

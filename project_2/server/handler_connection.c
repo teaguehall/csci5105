@@ -1,4 +1,3 @@
-#include "connection_handler.h"
 #include <stdlib.h>
 #include <unistd.h>
 #include <pthread.h>
@@ -6,17 +5,18 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#include "handler_client.h"
+#include "handler_connection.h"
+#include "handler_request.h"
 #include "../shared/msg.h"
 #include "../shared/tcp.h"
 #include "database.h"
 #include "server_msg.h"
+#include "file.h"
 
 void* connectionHandler(void *vargp)
 {
+    ServerGroup server_group;
     int remote_socket;
-    char remote_addr[256];
-    int remote_port;
 
     char rcvd_msg[MAX_SERVER_MSG_SIZE];
     
@@ -24,11 +24,9 @@ void* connectionHandler(void *vargp)
     int32_t msg_recv_id;
     uint32_t msg_recv_size;
 
-
     // cast/copy arguments to local variables
+    server_group = ((ConnectionHandlerInfo*)(vargp))->server_group;
     remote_socket = ((ConnectionHandlerInfo*)(vargp))->remote_socket;
-    strcpy(remote_addr, ((ConnectionHandlerInfo*)(vargp))->remote_addr);
-    remote_port = ((ConnectionHandlerInfo*)(vargp))->remote_port;
 
     // read message header
     if(tcp_Recv(remote_socket, rcvd_msg, MSG_HEADER_OFFSET, 5))
@@ -58,16 +56,16 @@ void* connectionHandler(void *vargp)
     switch(msg_recv_type)
     {
         case MSG_TYPE_POST_REQUEST :
-            handlePostRequest(remote_socket, rcvd_msg);
+            handlePostRequest(&server_group, remote_socket, rcvd_msg);
             break;
         case MSG_TYPE_READ_REQUEST :
-            handleReadRequest(remote_socket, rcvd_msg);
+            handleReadRequest(&server_group, remote_socket, rcvd_msg);
             break;
         case MSG_TYPE_CHOOSE_REQUEST :
-            handleChooseRequest(remote_socket, rcvd_msg);
+            handleChooseRequest(&server_group, remote_socket, rcvd_msg);
             break;
         case MSG_TYPE_REPLY_REQUEST :
-            handleReplyRequest(remote_socket, rcvd_msg);
+            handleReplyRequest(&server_group, remote_socket, rcvd_msg);
             break;
         default:
             fprintf(stderr, "ERROR: Server received unrecognized message\n");

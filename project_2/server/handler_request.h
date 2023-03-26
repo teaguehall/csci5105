@@ -1,16 +1,11 @@
 #ifndef SERVER_REQUEST_HANDLER_H
 #define SERVER_REQUEST_HANDLER_H
 
-        case MSG_TYPE_POST_REQUEST :
-            handlePostRequest(remote_socket, rcvd_msg);
-            break;
-        case MSG_TYPE_READ_REQUEST :
-            handleReadRequest(remote_socket, rcvd_msg);
-            break;
-        case MSG_TYPE_CHOOSE_REQUEST :
-            handleChooseRequest(remote_socket, rcvd_msg);
-            break;
-        case MSG_TYPE_REPLY_REQUEST :
-            handleReplyRequest(remote_socket, rcvd_msg);
+#include "file.h"
+
+void handlePostRequest(ServerGroup* server_group, int socket, char* msg_rcvd);
+void handleReadRequest(ServerGroup* server_group, int socket, char* msg_rcvd);
+void handleChooseRequest(ServerGroup* server_group, int socket, char* msg_rcvd);
+void handleReplyRequest(ServerGroup* server_group, int socket, char* msg_rcvd);
 
 #endif // SERVER_REQUEST_HANDLER_H

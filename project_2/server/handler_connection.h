@@ -1,11 +1,12 @@
 #ifndef SERVER_CONNECTION_HANDLER_H
 #define SERVER_CONNECTION_HANDLER_H
 
+#include "file.h"
+
 typedef struct ConnectionHandlerInfo
 {
+    ServerGroup server_group;
     int remote_socket;
-    char remote_addr[128];
-    int remote_port;
 
 } ConnectionHandlerInfo;
 

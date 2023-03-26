@@ -29,6 +29,7 @@
         "string.h": "c",
         "string": "c",
         "string_view": "c",
-        "pthread.h": "c"
+        "pthread.h": "c",
+        "handler_request.h": "c"
     }
 }
