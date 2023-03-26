@@ -157,14 +157,12 @@ int db_Reply(int parent_id, char* author, char* contents, int* out_err_db_full, 
     // update node nexts
     if(child_index != -1) // indicates there is already a response to what we're responding to
     {
-        printf("Previous reply found\n");
         saved_next = db.nodes[child_index].next;
         db.nodes[child_index].next = node.article.id;
         node.next = saved_next;
     }
     else // indicates were the first response
     {
-        printf("No previous reply found\n");
         saved_next = db.nodes[parent_index].next;
         db.nodes[parent_index].next = node.article.id;
         node.next = saved_next;

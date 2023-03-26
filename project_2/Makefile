@@ -1,6 +1,7 @@
 .PHONY: all clean
 
 all:
+	make clean
 	$(MAKE) -C shared
 	$(MAKE) -C server
 	$(MAKE) -C client

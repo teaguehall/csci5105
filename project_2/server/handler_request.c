@@ -230,7 +230,7 @@ void handleReplyRequest(ServerGroup* server_group, int socket, char* msg_rcvd)
     }
 
     // build success response
-    msg_Build_PostResponse(response);    
+    msg_Build_ReplyResponse(response);    
 
     // send response
     send_response:

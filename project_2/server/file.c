@@ -1,4 +1,4 @@
-// this entire function is trash but is good enough
+// this entire function is trash but good enough
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,8 +13,13 @@ int file_ParseServerGroup(char* file_path, ServerGroup* out_group)
     char line[1024];
     char str_address[1024];
     char str_port[1024];
+    char str_nr[128];
+    char str_nw[128];
     int error = 0;
     int colon_found, colon_pos;
+    int semicolon_1_pos = -1; // used by quorum protocol
+    int semicolon_2_pos = -1; // used by quorum protocol
+    int i;
 
     FILE* file;
 
@@ -36,9 +41,44 @@ int file_ParseServerGroup(char* file_path, ServerGroup* out_group)
         {
             out_group->protocol = PROTOCOL_SEQUENTIAL;
         }
-        else if(strcmp(line, "QUORUM") == 0 || strcmp(line, "quorum") == 0)
+        else if(strstr(line, "QUORUM") != NULL || strstr(line, "quorum") != NULL)
         {
             out_group->protocol = PROTOCOL_QUORUM;
+
+            // find semi-colons
+            for(i = 0; i < strlen(line); i++)
+            {
+                if(line[i] == ';')
+                {
+                    if(semicolon_1_pos == -1) 
+                        semicolon_1_pos = i;
+                    else
+                        semicolon_2_pos = i;
+                }
+            }
+
+            // extract nr and nw and convert
+            memset(str_nr, 0, sizeof(str_nr));
+            memset(str_nw, 0, sizeof(str_nw));
+            memcpy(str_nr, line + semicolon_1_pos + 1, semicolon_2_pos - semicolon_1_pos - 1);
+            memcpy(str_nw, line + semicolon_2_pos + 1, strlen(line) - semicolon_2_pos + 1);
+
+            out_group->nr = atoi(str_nr);
+            out_group->nw = atoi(str_nw);
+
+            if(out_group->nr == 0) 
+            {
+                fprintf(stderr, "ERROR: Invalid Nr \"%s\" found in \"%s\"\n", str_nr, line);
+                error = -1;
+                goto exit;
+            }
+
+            if(out_group->nw == 0) 
+            {
+                fprintf(stderr, "ERROR: Invalid Nw \"%s\" found in \"%s\"\n", str_nw, line);
+                error = -1;
+                goto exit;
+            }
         }
         else if(strcmp(line, "READ-YOUR-WRITE") == 0 || strcmp(line, "READ-YOUR-WRITE") == 0)
         {
@@ -70,7 +110,7 @@ int file_ParseServerGroup(char* file_path, ServerGroup* out_group)
         colon_found = 0;
 
         // find colon
-        for(int i = 0; i < strlen(line); i++)
+        for(i = 0; i < strlen(line); i++)
         {
             if(line[i] == ':')
             {
@@ -124,6 +164,31 @@ int file_ParseServerGroup(char* file_path, ServerGroup* out_group)
 
         // increment server count
         out_group->server_count++;
+    }
+
+    // validate Nr and Nw requirements
+    if(out_group->protocol == PROTOCOL_QUORUM)
+    {
+        if((out_group->nr + out_group->nw) <= out_group->server_count)
+        {
+            fprintf(stderr, "ERROR: Quorum protocol failed \"Nr + Nw > N\". Try again\n");
+            error = -1;
+            goto exit; 
+        }
+
+        if((out_group->nw) <= (out_group->server_count / 2))
+        {
+            fprintf(stderr, "ERROR: Quorum protocol failed \"Nw > N/2\". Try again\n");
+            error = -1;
+            goto exit; 
+        }
+
+        if(out_group->nw > out_group->server_count || out_group->nr > out_group->server_count)
+        {
+            fprintf(stderr, "ERROR: Quorum protocol failed. Nr > N or Nw > N. Try again\n");
+            error = -1;
+            goto exit; 
+        }
     }
 
     // close file

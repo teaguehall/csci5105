@@ -68,6 +68,9 @@ int main(int argc, char * argv[])
         is_coordinator = 0;
     }
 
+    // print start-up information
+    
+
     // copy info to connection thread input args
     ConnectionHandlerInfo connection_info;
     memcpy(&(connection_info.server_group), &server_group, sizeof(server_group));
