@@ -67,20 +67,10 @@ void protoReadYourWrite_Post(ServerGroup* server_group, int socket, char* author
 }
 
 // handles read request message from clients
-void protoReadYourWrite_Read(ServerGroup* server_group, int socket, char* msg_rcvd)
+void protoReadYourWrite_Read(ServerGroup* server_group, int socket)
 {
     int count;
     
-    // parsed reponse
-    uint32_t max_articles;
-
-    // extract message contents
-    if(msg_Parse_ReadRequest(msg_rcvd, &max_articles))
-    {
-        printf("ERROR while parsing READ REQUEST message");
-        return;
-    }
-
     // read articles from database
     db_Read(&count, articles);
 
@@ -95,30 +85,18 @@ void protoReadYourWrite_Read(ServerGroup* server_group, int socket, char* msg_rc
 }
 
 // handles reply request message from clients
-void protoReadYourWrite_Reply(ServerGroup* server_group, int socket, char* msg_rcvd)
+void protoReadYourWrite_Reply(ServerGroup* server_group, int socket, int article_id, char* author, char* contents)
 {
     ArticleDatabase db_snapshot;
     char error_msg[4096];
 
     int db_full, invalid_id;
 
-    // parsed reponse
-    uint32_t response_id;
-    char author[4096];
-    char contents[4096];
-
-    // extract message contents
-    if(msg_Parse_ReplyRequest(msg_rcvd, &response_id, author, contents))
-    {
-        printf("ERROR while parsing Post request message");
-        return;
-    }
-
     // if we're the coordinator, update our database and then push update to all other replicas
     if(is_coordinator)
     {
         // submit reply to database
-        if(db_Reply(response_id, author, contents, &db_full, &invalid_id) == -1)
+        if(db_Reply(article_id, author, contents, &db_full, &invalid_id) == -1)
         {
             if(db_full)
             {
@@ -127,7 +105,7 @@ void protoReadYourWrite_Reply(ServerGroup* server_group, int socket, char* msg_r
             }
             else if(invalid_id)
             {
-                sprintf(error_msg, "Client attempted to reply to article \"%u\" which does not exist", response_id);
+                sprintf(error_msg, "Client attempted to reply to article \"%u\" which does not exist", article_id);
                 msg_Build_ErrorResponse(response, error_msg);
                 goto send_response;
             }
@@ -141,7 +119,7 @@ void protoReadYourWrite_Reply(ServerGroup* server_group, int socket, char* msg_r
         db_Backup(&db_snapshot);    
 
         // push updated database to all other replicas
-        for(int i = 0; i < server_group->server_count - 1; i++)
+        for(int i = 1; i < server_group->server_count; i++)
         {
             if(net_DbPush(server_group->servers[i].address, server_group->servers[i].port, &db_snapshot))
             {
@@ -153,7 +131,7 @@ void protoReadYourWrite_Reply(ServerGroup* server_group, int socket, char* msg_r
     }
     else // if we're NOT the coordinator, forward message to the coordinator
     {
-        if(net_Reply(server_group->servers[0].address, server_group->servers[0].port, response_id, author, contents))
+        if(net_Reply(server_group->servers[0].address, server_group->servers[0].port, article_id, author, contents))
         {
             msg_Build_ErrorResponse(response, "Reply request failed to commit to coordinator server...");
             goto send_response;

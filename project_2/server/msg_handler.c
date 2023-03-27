@@ -149,7 +149,7 @@ void msgHandler_ReplyRequest(ServerGroup* server_group, int socket, char* msg_rc
             protoQuorum_Reply(server_group, socket, response_id, author, contents);
             break;
         case PROTOCOL_READ_YOUR_WRITE:
-            protoReadYourWrite_Reply(server_group, response_id, socket, author, contents);
+            protoReadYourWrite_Reply(server_group, socket, response_id, author, contents);
             break; 
         default: // should never get here
             break;
