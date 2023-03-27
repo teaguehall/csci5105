@@ -58,7 +58,7 @@ int tcp_Connect(const char* remote_addr, int remote_port, int* out_socket)
     {
         fprintf(stderr, "ERROR: Failed to create socket, %s\n", strerror(errno));
         return -1; // failure
-    } 
+    }
 
     result = connect(*out_socket, (struct sockaddr*)&remote, sizeof(remote));
     if(result == -1)

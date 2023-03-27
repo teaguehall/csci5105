@@ -69,17 +69,20 @@ int main(int argc, char * argv[])
         printf("INFO: Starting %s:%s as non-coordinator server...\n", argv[1], argv[2]);
     }
 
-    // create sync thread if quorum consistency is active
-    if(pthread_create(&thread_sync, NULL, quorumSyncThread, NULL) != 0)
-    {
-        fprintf(stderr, "ERROR: Failed to spawn quorum sync thread. %s\n", strerror(errno));
-        exit(EXIT_FAILURE);
-    }
-
     // copy info to connection thread input args
     ConnectionHandlerInfo connection_info;
     memcpy(&(connection_info.server_group), &server_group, sizeof(server_group));
 
+    // create sync thread if quorum consistency is active
+    if(server_group.protocol == PROTOCOL_QUORUM)
+    {
+        if(pthread_create(&thread_sync, NULL, quorumSyncThread, (void*)(&connection_info)) != 0)
+        {
+            fprintf(stderr, "ERROR: Failed to spawn quorum sync thread. %s\n", strerror(errno));
+            exit(EXIT_FAILURE);
+        }
+    }
+    
     // create listener socket
     if(tcp_CreateListener(argv[1], atoi(argv[2]), &listener_socket))
     {
@@ -100,8 +103,6 @@ int main(int argc, char * argv[])
 
         // create connection request info
         connection_info.remote_socket = remote_socket;
-
-        printf("Connection accepted!\n");
         
         // create new thread for connection
         if(pthread_create(&thread_connection, NULL, connectionHandler, (void*)(&connection_info)) != 0)

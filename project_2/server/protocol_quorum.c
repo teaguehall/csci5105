@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdint.h>
 
+#include "connection_handler.h"
 #include "msg_handler.h"
 #include "../shared/msg.h"
 #include "../shared/tcp.h"
@@ -81,8 +82,6 @@ void protoQuorum_Post(ServerGroup* server_group, int socket, char* author, char*
 
 void protoQuorum_Read(ServerGroup* server_group, int socket)
 {
-    printf("TODO in proto quorum!\n"); // TODO remove
-    
     ArticleDatabase temp_db;
     ArticleDatabase saved_db;
     int article_count;
@@ -182,7 +181,7 @@ void protoQuorum_Reply(ServerGroup* server_group, int socket, int article_id, ch
     // build response
     if(success >= server_group->nw)
     {
-        msg_Build_PostResponse(response);
+        msg_Build_ReplyResponse(response);
     }
     else
     {
@@ -193,5 +192,32 @@ void protoQuorum_Reply(ServerGroup* server_group, int socket, int article_id, ch
     if(tcp_Send(socket, response, msg_GetActualSize(response), 5))
     {
         fprintf(stderr, "ERROR: Failed to send CHOOSE-RESPONSE\n");
+    }
+}
+
+void* quorumSyncThread(void *vargp)
+{
+    ServerGroup server_group;
+    ArticleDatabase local_db;
+    ArticleDatabase rcvd_db;
+
+    // cast/copy arguments to local variables
+    server_group = ((ConnectionHandlerInfo*)(vargp))->server_group;
+
+    // monitor once a second
+    while(1)
+    {
+        // iterate through servers to check for new version
+        for(int i = 0; i < server_group.server_count; i++)
+        {
+            db_Backup(&local_db);
+            net_DbPull(server_group.servers[i].address, server_group.servers[i].port, &rcvd_db);
+            if(rcvd_db.version > local_db.version)
+            {
+                db_Restore(&rcvd_db);
+            }
+
+            sleep(1);
+        }
     }
 }

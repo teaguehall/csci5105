@@ -47,7 +47,7 @@ void protoSequential_Post(ServerGroup* server_group, int socket, char* author, c
         db_Backup(&db_snapshot);
 
         // push updated database to all other replicas
-        for(int i = 0; i < server_group->server_count - 1; i++)
+        for(int i = 1; i < server_group->server_count; i++)
         {
             net_DbPush(server_group->servers[i].address, server_group->servers[i].port, &db_snapshot);
         }
@@ -136,7 +136,7 @@ void protoSequential_Reply(ServerGroup* server_group, int socket, int article_id
         db_Backup(&db_snapshot);    
         
         // push updated database to all other replicas
-        for(int i = 0; i < server_group->server_count - 1; i++)
+        for(int i = 1; i < server_group->server_count; i++)
         {
             if(net_DbPush(server_group->servers[i].address, server_group->servers[i].port, &db_snapshot))
             {
