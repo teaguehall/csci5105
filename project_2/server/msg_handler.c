@@ -156,7 +156,7 @@ void msgHandler_ReplyRequest(ServerGroup* server_group, int socket, char* msg_rc
     }
 }
 
-// handles db push requeset from servers
+// handles db push request from servers
 void msgHandler_DbPushRequest(ServerGroup* server_group, int socket, char* msg_rcvd)
 {
     ArticleDatabase db_rcvd;
@@ -180,3 +180,22 @@ void msgHandler_DbPushRequest(ServerGroup* server_group, int socket, char* msg_r
         fprintf(stderr, "ERROR: Failed to send POST RESPONSE\n");
     }
 }
+
+// handles db pull request from servers
+void msgHandler_DbPullRequest(ServerGroup* server_group, int socket, char* msg_rcvd)
+{
+    ArticleDatabase db_snapshot;
+
+    // take snapshot of our database
+    db_Backup(&db_snapshot);
+
+    // build response
+    msg_Build_DbPullResponse(response, &db_snapshot);
+
+    // send response
+    if(tcp_Send(socket, response, msg_GetActualSize(response), 5))
+    {
+        fprintf(stderr, "ERROR: Failed to send POST RESPONSE\n");
+    }
+}
+

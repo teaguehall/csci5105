@@ -69,6 +69,8 @@ void* connectionHandler(void *vargp)
         case MSG_TYPE_DB_PUSH_REQUEST :
             msgHandler_DbPushRequest(&server_group, remote_socket, rcvd_msg);
             break;
+        case MSG_TYPE_DB_PULL_REQUEST :
+            msgHandler_DbPullRequest(&server_group, remote_socket, rcvd_msg);
         default:
             fprintf(stderr, "ERROR: Server received unrecognized message %d\n", msg_recv_type);
             return NULL;

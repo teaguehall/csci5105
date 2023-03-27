@@ -39,6 +39,10 @@
     int msg_Parse_DbPushRequest(char* in_msg, ArticleDatabase* out_db);
     int msg_Build_DbPushResponse(char* out_msg);
 
+    int msg_Build_DbPullRequest(char* out_msg);
+    int msg_Build_DbPullResponse(char* out_msg, ArticleDatabase* in_db);
+    int msg_Parse_DbPullResponse(char* in_msg, ArticleDatabase* out_db);
+
 
     #define MSG_MAGIC_NUMBER                0x12AB34CD
     #define MSG_HEADER_OFFSET               16
@@ -162,7 +166,29 @@
     // - message ID (uint32 4-bytes)
     // - message size (uint32 4-bytes)
 
+    #define MSG_TYPE_DB_PULL_REQUEST        0x7000
 
+    // message structure:
+    // - magic number (uint32 4-bytes)
+    // - message type (uint32 4-bytes)
+    // - message ID (uint32 4-bytes)
+    // - message size (uint32 4-bytes)
 
+    #define MSG_TYPE_DB_PULL_RESPONSE       0x7001
+
+    // message structure:
+    // - magic number (uint32 4-bytes)
+    // - message type (uint32 4-bytes)
+    // - message ID (uint32 4-bytes)
+    // - message size (uint32 4-bytes)
+    // - db version (uint32 4-bytes)
+    // - number of db nodes (uint32 4-bytes)
+    //      - next article (uint32 4-bytes)
+    //      - article ID (uint32 4-bytes)
+    //      - parent article ID (uint32 4-bytes)
+    //      - article depth (uint32 4-bytes)
+    //      - article author (null-terminated string)
+    //      - article title (null-terminated string)
+    //      - article contents (null-terminated string)
 
 #endif // PROTOCOL_H

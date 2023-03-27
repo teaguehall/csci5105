@@ -36,8 +36,6 @@ void protoReadYourWrite_Post(ServerGroup* server_group, int socket, char* author
         // take snapshot of database (will send this to all replicas)
         db_Backup(&db_snapshot);
 
-        printf("db snapshot version = %d\n", db_snapshot.version);
-
         // push updated database to all other replicas
         for(int i = 0; i < server_group->server_count - 1; i++)
         {
@@ -141,7 +139,7 @@ void protoReadYourWrite_Reply(ServerGroup* server_group, int socket, char* msg_r
         }   
         // take snapshot of database (will send this to all replicas)
         db_Backup(&db_snapshot);    
-        printf("db snapshot version = %d\n", db_snapshot.version);  
+
         // push updated database to all other replicas
         for(int i = 0; i < server_group->server_count - 1; i++)
         {
