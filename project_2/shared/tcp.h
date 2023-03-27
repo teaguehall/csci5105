@@ -12,5 +12,6 @@ int tcp_CreateListener(const char* local_addr, int local_port, int* out_socket);
 int tcp_Accept(int listener_socket, char* remote_addr, int* remote_port, int* out_socket);
 int tcp_Send(int socket, const char* msg_send, size_t msg_size, int timeout_sec);
 int tcp_Recv(int socket, char* msg_recv, size_t msg_size, int timeout_sec);
+int tcp_GetRemoteAddr(int socket, char* addr, int* port);
 
 #endif // SHARED_TCP_H

@@ -211,3 +211,32 @@ int net_DbPush(char* address, int port, ArticleDatabase* database)
     // success
     return 0;
 }
+
+int net_DbPull(char* address, int port, ArticleDatabase* out_database)
+{
+    char send_msg[MAX_MSG_SIZE];
+    char recv_msg[MAX_MSG_SIZE];
+
+    // build message
+    if(msg_Build_DbPullRequest(send_msg))
+    {
+        fprintf(stderr, "ERROR: Failed to build DB PULL REQUEST\n");
+        return -1;
+    }
+
+    // transmit message
+    if(net_SendRecv(address, port, send_msg, recv_msg))
+    {
+        return -1;
+    }
+
+    // parse response
+    if(msg_Parse_DbPullResponse(recv_msg, out_database))
+    {
+        fprintf(stderr, "ERROR: Failed to parse DB PULL RESPONSE\n");
+        return -1;
+    }
+
+    // success
+    return 0;
+}

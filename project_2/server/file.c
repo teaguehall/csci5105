@@ -151,16 +151,8 @@ int file_ParseServerGroup(char* file_path, ServerGroup* out_group)
         }
 
         // write server and port to output
-        if(out_group->server_count == 0)
-        {
-            strcpy(out_group->primary.address, str_address);
-            out_group->primary.port = atoi(str_port);
-        }
-        else
-        {
-            strcpy(out_group->others[out_group->server_count - 1].address, str_address);
-            out_group->others[out_group->server_count - 1].port = atoi(str_port);
-        }
+        strcpy(out_group->servers[out_group->server_count].address, str_address);
+        out_group->servers[out_group->server_count].port = atoi(str_port);
 
         // increment server count
         out_group->server_count++;

@@ -49,12 +49,12 @@ void protoSequential_Post(ServerGroup* server_group, int socket, char* author, c
         // push updated database to all other replicas
         for(int i = 0; i < server_group->server_count - 1; i++)
         {
-            net_DbPush(server_group->others[i].address, server_group->others[i].port, &db_snapshot);
+            net_DbPush(server_group->servers[i].address, server_group->servers[i].port, &db_snapshot);
         }
     }
     else // if we're NOT the coordinator, forward message to the coordinator
     {
-        if(net_Post(server_group->primary.address, server_group->primary.port, author, title, contents))
+        if(net_Post(server_group->servers[0].address, server_group->servers[0].port, author, title, contents))
         {
             // build error response
             msg_Build_ErrorResponse(response, "Post request failed to commit to coordinator server...");
@@ -138,9 +138,9 @@ void protoSequential_Reply(ServerGroup* server_group, int socket, int article_id
         // push updated database to all other replicas
         for(int i = 0; i < server_group->server_count - 1; i++)
         {
-            if(net_DbPush(server_group->others[i].address, server_group->others[i].port, &db_snapshot))
+            if(net_DbPush(server_group->servers[i].address, server_group->servers[i].port, &db_snapshot))
             {
-                sprintf(error_msg, "Failed to replicate database to %s:%d. Server down?", server_group->others[i].address, server_group->others[i].port);
+                sprintf(error_msg, "Failed to replicate database to %s:%d. Server down?", server_group->servers[i].address, server_group->servers[i].port);
                 msg_Build_ErrorResponse(response, error_msg);
                 goto send_err_response;
             }
@@ -148,7 +148,7 @@ void protoSequential_Reply(ServerGroup* server_group, int socket, int article_id
     }
     else // if we're NOT the coordinator, forward message to the coordinator
     {
-        if(net_Reply(server_group->primary.address, server_group->primary.port, article_id, author, contents))
+        if(net_Reply(server_group->servers[0].address, server_group->servers[0].port, article_id, author, contents))
         {
             msg_Build_ErrorResponse(response, "Reply request failed to commit to coordinator server...");
             goto send_err_response;

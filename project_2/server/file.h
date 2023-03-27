@@ -19,8 +19,7 @@ typedef struct ServerGroup
     int nr; // only used when quorum protocol selected
     int nw; // only used when quorum protocol selected
     int server_count;
-    Server primary;
-    Server others[MAX_GROUP_SIZE];
+    Server servers[MAX_GROUP_SIZE];
 } ServerGroup;
 
 int file_ParseServerGroup(char* file_path, ServerGroup* out_group);

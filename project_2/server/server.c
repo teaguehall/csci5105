@@ -5,6 +5,7 @@
 #include <pthread.h>
 
 #include "connection_handler.h"
+#include "protocol.h"
 #include "file.h"
 
 #include "../shared/tcp.h"
@@ -16,7 +17,7 @@ int is_coordinator;
 
 int main(int argc, char * argv[])
 {
-    pthread_t thread_connection;
+    pthread_t thread_connection, thread_sync;
 
     int listener_socket = -1;
     int remote_socket = -1;
@@ -57,7 +58,7 @@ int main(int argc, char * argv[])
     }
 
     // determine coordinator and print info message to terminal
-    if(strcmp(argv[1], server_group.primary.address) == 0 && atoi(argv[2]) == server_group.primary.port)
+    if(strcmp(argv[1], server_group.servers[0].address) == 0 && atoi(argv[2]) == server_group.servers[0].port)
     {
         is_coordinator = 1;
         printf("INFO: Starting %s:%s as coordinator server...\n", argv[1], argv[2]);
@@ -66,6 +67,13 @@ int main(int argc, char * argv[])
     {
         is_coordinator = 0;
         printf("INFO: Starting %s:%s as non-coordinator server...\n", argv[1], argv[2]);
+    }
+
+    // create sync thread if quorum consistency is active
+    if(pthread_create(&thread_sync, NULL, quorumSyncThread, NULL) != 0)
+    {
+        fprintf(stderr, "ERROR: Failed to spawn quorum sync thread. %s\n", strerror(errno));
+        exit(EXIT_FAILURE);
     }
 
     // copy info to connection thread input args
@@ -92,6 +100,8 @@ int main(int argc, char * argv[])
 
         // create connection request info
         connection_info.remote_socket = remote_socket;
+
+        printf("Connection accepted!\n");
         
         // create new thread for connection
         if(pthread_create(&thread_connection, NULL, connectionHandler, (void*)(&connection_info)) != 0)

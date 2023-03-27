@@ -209,6 +209,10 @@ int tcp_Send(int socket, const char* msg_send, size_t msg_size, int timeout_sec)
 // receives data from socket
 int tcp_Recv(int socket, char* msg_recv, size_t msg_size, int timeout_sec)
 {
+    // exit immediately if message recv size is zero
+    if(msg_size == 0)
+        return 0;
+    
     // configure timeout
     struct timeval timeout;      
     timeout.tv_sec = timeout_sec;
@@ -235,5 +239,26 @@ int tcp_Recv(int socket, char* msg_recv, size_t msg_size, int timeout_sec)
     }
 
     // success
+    return 0;
+}
+
+// returns IP address and port of remote host associated with socket, return 0 on success, -1 on error
+int tcp_GetRemoteAddr(int socket, char* ip, int* port)
+{
+    struct sockaddr_in addr;
+    socklen_t addrlen = sizeof(addr);
+
+    if (getpeername(socket, (struct sockaddr *)&addr, &addrlen) != 0) {
+        return -1;
+    }
+
+    if (ip != NULL) {
+        inet_ntop(AF_INET, &(addr.sin_addr), ip, INET_ADDRSTRLEN);
+    }
+
+    if (port != NULL) {
+        *port = ntohs(addr.sin_port);
+    }
+
     return 0;
 }

@@ -3,6 +3,8 @@
 
 #include "file.h"
 
+void* quorumSyncThread(void *vargp);
+
 // sequential stuff
 void protoSequential_Post(ServerGroup* server_group, int socket, char* author, char* title, char* contents);
 void protoSequential_Read(ServerGroup* server_group, int socket);

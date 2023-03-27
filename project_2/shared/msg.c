@@ -675,7 +675,7 @@ int msg_Build_DbPullRequest(char* out_msg)
     msg_Build_Header(out_msg, MSG_TYPE_DB_PULL_REQUEST,  0);
 
     // success
-    return 0;    
+    return 0;
 }
 
 int msg_Build_DbPullResponse(char* out_msg, ArticleDatabase* in_db)
@@ -739,14 +739,14 @@ int msg_Parse_DbPullResponse(char* in_msg, ArticleDatabase* out_db)
     // validate header
     if(msg_Parse_Header(in_msg, &msg_type, &msg_id, &msg_size))
     {
-        fprintf(stderr, "ERROR: Invalid header found while parsing MSG_TYPE_DB_PULL_REQUEST message\n");
+        fprintf(stderr, "ERROR: Invalid header found while parsing MSG_TYPE_DB_PULL_RESPONSE message\n");
         return -1;
     }
     
     // validate type
-    if(msg_type != MSG_TYPE_DB_PULL_REQUEST)
+    if(msg_type != MSG_TYPE_DB_PULL_RESPONSE)
     {
-        fprintf(stderr, "ERROR: Incorrect message type while parsing MSG_TYPE_DB_PULL_REQUEST message. Found %d, Expected %d\n", msg_type, MSG_TYPE_DB_PULL_REQUEST);
+        fprintf(stderr, "ERROR: Incorrect message type while parsing MSG_TYPE_DB_PULL_RESPONSE message. Found %d, Expected %d\n", msg_type, MSG_TYPE_DB_PULL_RESPONSE);
         return -1;
     }
 

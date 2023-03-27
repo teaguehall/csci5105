@@ -43,6 +43,8 @@ void* connectionHandler(void *vargp)
         return NULL;
     }
 
+    printf("message %d recvd, message size =%d\n", msg_recv_type, msg_recv_size); // TODO 
+
     // read rest of message
     if(tcp_Recv(remote_socket, rcvd_msg + MSG_HEADER_OFFSET, msg_recv_size, 5))
     {
@@ -70,7 +72,10 @@ void* connectionHandler(void *vargp)
             msgHandler_DbPushRequest(&server_group, remote_socket, rcvd_msg);
             break;
         case MSG_TYPE_DB_PULL_REQUEST :
+            printf("Before pull request handler\n");
             msgHandler_DbPullRequest(&server_group, remote_socket, rcvd_msg);
+            printf("After pull request handler\n");
+            break;
         default:
             fprintf(stderr, "ERROR: Server received unrecognized message %d\n", msg_recv_type);
             return NULL;
