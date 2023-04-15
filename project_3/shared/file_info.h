@@ -6,7 +6,8 @@
 typedef struct FileInfo
 {
     char name[512];
-    uint32_t bytes;
+    uint32_t size;          // size of file in bytes
+    uint32_t check_sum;     // resulting checksum of file data
 
 } FileInfo;
 

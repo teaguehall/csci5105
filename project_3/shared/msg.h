@@ -32,19 +32,68 @@ int msg_Build_PingResponse(char* out_msg);
 int msg_Build_GetLoadRequest(char* out_msg);
 int msg_Build_GetLoadResponse(char* out_msg, int loads);
 int msg_Parse_GetLoadRequest(const char* in_msg, int* out_loads);
+int msg_Build_DownloadRequest(char* out_msg, const char* file_name);
+int msg_Parse_DownloadRequest(const char* in_msg, char* out_file_name);
+int msg_Build_DownloadResponse(char* out_msg, const FileInfo* file_info, char* file_data);
+int msg_Parse_DownloadResponse(const char* in_msg, FileInfo* out_file_info, char* out_file_data);
 
-// TODO 
-
-#define MSG_MAGIC_NUMBER                0x12AB34CD
+#define MSG_MAGIC_NUMBER                0x12AB34CD      // ol' magic
 #define MSG_HEADER_SIZE                 16              // bytes
 
-#define MSG_TYPE_ERROR_RESPONSE         0x1000
-// message structure:
+// message header:
 // - magic number (uint32 4-bytes)
 // - message type (uint32 4-bytes)
 // - message ID (uint32 4-bytes)
 // - message size (uint32 4-bytes)
+
+#define MSG_TYPE_ERROR_RESPONSE         0x1000
+// message structure:
+// - header (see structure above)
 // - error message (null terminated string)
+
+#define MSG_TYPE_FIND_REQUEST           0x2000
+// message structure:
+// - header (see structure above)
+// - file name (null terminated string)
+
+#define MSG_TYPE_FIND_RESPONSE          0x2001
+// message structure:
+// - header (see structure above)
+// - number of nodes (uint32 4-bytes)
+//      - node address (null terminated string)
+//      - node port (uint32 4-bytes)
+//      - latitude (int32 4-bytes)
+//      - longitude (int32 4-bytes)
+
+#define MSG_TYPE_UPDATE_LIST_REQUEST    0x3000
+// message structure:
+// - header (see structure above)
+// - number of files (uint32 4-bytes)
+//      - file name (null terminated string)
+//      - file size (uint32 4-bytes)
+//      - file check sum (uint32 4-bytes)
+
+#define MSG_TYPE_UPDATE_LIST_RESPONSE   0x3001
+// message structure:
+// - header (see structure above)
+
+
+//
+
+int msg_Build_PingRequest(char* out_msg, PeerInfo peer);
+int msg_Parse_PingRequest(const char* in_msg, PeerInfo* out_peer);
+
+int msg_Build_PingResponse(char* out_msg);
+int msg_Build_GetLoadRequest(char* out_msg);
+
+int msg_Build_GetLoadResponse(char* out_msg, int loads);
+int msg_Parse_GetLoadRequest(const char* in_msg, int* out_loads);
+
+int msg_Build_DownloadRequest(char* out_msg, const char* file_name);
+int msg_Parse_DownloadRequest(const char* in_msg, char* out_file_name);
+
+int msg_Build_DownloadResponse(char* out_msg, const FileInfo* file_info, char* file_data);
+int msg_Parse_DownloadResponse(const char* in_msg, FileInfo* out_file_info, char* out_file_data);
 
 #define MSG_TYPE_POST_REQUEST           0x2000
 // message structure:
