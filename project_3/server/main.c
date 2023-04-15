@@ -4,115 +4,69 @@
 #include <errno.h>
 #include <pthread.h>
 
-//#include "connection_handler.h"
-//#include "protocol.h"
-//#include "file.h"
-//
-//#include "../shared/tcp.h"
-//#include "../shared/msg.h"
-//#include "../shared/article.h"
+#include "connection_handler.h"
+
+#include "../shared/tcp.h"
 
 int main(int argc, char * argv[])
 {
-    printf("Hello, I'm the tracking server!\n");
-    return 0;
+    // verify number of input arguments
+    if(argc < 3 || argc > 3)
+    {
+        fprintf(stderr, "\n");
+        fprintf(stderr, "EROR: Unexpected number of input arguments received. Expected:\n");
+        fprintf(stderr, " * REQUIRED: Server Listening Address (xxx.xxx.xxx.xxx)\n");
+        fprintf(stderr, " * REQUIRED: Server Listening Port\n");
+        fprintf(stderr, "\n");
+    
+        exit(EXIT_FAILURE);
+    }
 
-//    pthread_t thread_connection, thread_sync;
-//
-//    int listener_socket = -1;
-//    int remote_socket = -1;
-//    char remote_addr[128];
-//    int remote_port;
-//    
-//    // verify number of input arguments
-//    if(argc < 3 || argc > 3)
-//    {
-//        fprintf(stderr, "\n");
-//        fprintf(stderr, "EROR: Unexpected number of input arguments received. Expected:\n");
-//        fprintf(stderr, " * REQUIRED: Server Listening Address (xxx.xxx.xxx.xxx)\n");
-//        fprintf(stderr, " * REQUIRED: Server Listening Port\n");
-//        fprintf(stderr, "\n");
-//
-//        exit(EXIT_FAILURE);
-//    }
-//
-//    // validate listener address
-//    if(!tcp_IpAddrIsValid(argv[1]))
-//    {
-//        fprintf(stderr, "ERROR: Invalid server listening address %s provided\n", argv[1]);
-//        exit(EXIT_FAILURE);
-//    }
-//
-//    // validate listener port
-//    if(!tcp_PortIsValid(atoi(argv[2])))
-//    {
-//        fprintf(stderr, "ERROR: Invalid server listening port %s provided\n", argv[2]);
-//        exit(EXIT_FAILURE);
-//    }
-//
-//    // parse server group file
-//    if(file_ParseServerGroup("./config.txt", &server_group))
-//    {
-//        fprintf(stderr, "ERROR: Error occurred while parsing server group config file.");
-//        exit(EXIT_FAILURE);
-//    }
-//
-//    // determine coordinator and print info message to terminal
-//    if(strcmp(argv[1], server_group.servers[0].address) == 0 && atoi(argv[2]) == server_group.servers[0].port)
-//    {
-//        is_coordinator = 1;
-//        printf("INFO: Starting %s:%s as coordinator server...\n", argv[1], argv[2]);
-//    }
-//    else
-//    {
-//        is_coordinator = 0;
-//        printf("INFO: Starting %s:%s as non-coordinator server...\n", argv[1], argv[2]);
-//    }
-//
-//    // copy info to connection thread input args
-//    ConnectionHandlerInfo connection_info;
-//    memcpy(&(connection_info.server_group), &server_group, sizeof(server_group));
-//
-//    // create sync thread if quorum consistency is active
-//    if(server_group.protocol == PROTOCOL_QUORUM)
-//    {
-//        if(pthread_create(&thread_sync, NULL, quorumSyncThread, (void*)(&connection_info)) != 0)
-//        {
-//            fprintf(stderr, "ERROR: Failed to spawn quorum sync thread. %s\n", strerror(errno));
-//            exit(EXIT_FAILURE);
-//        }
-//    }
-//    
-//    // create listener socket
-//    if(tcp_CreateListener(argv[1], atoi(argv[2]), &listener_socket))
-//    {
-//        printf("Failed to create listener socket\n");
-//        exit(EXIT_FAILURE);
-//    }
-//
-//    // accept connections forever
-//    while(1)
-//    {
-//        // accept connection
-//        if(tcp_Accept(listener_socket, remote_addr, &remote_port, &remote_socket))
-//        {
-//            printf("ERROR occurred while accepting connection\n");
-//            tcp_Disconnect(remote_socket);
-//            continue;
-//        }
-//
-//        // create connection request info
-//        connection_info.remote_socket = remote_socket;
-//        
-//        // create new thread for connection
-//        if(pthread_create(&thread_connection, NULL, connectionHandler, (void*)(&connection_info)) != 0)
-//        {
-//            fprintf(stderr, "ERROR: Failed to spawn connection handler thread. %s\n", strerror(errno));
-//            exit(EXIT_FAILURE);
-//        }
-//    }
-//
-//    // shoud never reach here.. throw failure if it does
-//    return EXIT_FAILURE;
+    // validate listener address
+    if(!tcp_IpAddrIsValid(argv[1]))
+    {
+        fprintf(stderr, "ERROR: Invalid server listening address %s provided\n", argv[1]);
+        exit(EXIT_FAILURE);
+    }
 
+    // validate listener port
+    if(!tcp_PortIsValid(atoi(argv[2])))
+    {
+        fprintf(stderr, "ERROR: Invalid server listening port %s provided\n", argv[2]);
+        exit(EXIT_FAILURE);
+    }
+
+    int listener_socket = -1;
+
+    // create listener socket
+    if(tcp_CreateListener(argv[1], atoi(argv[2]), &listener_socket))
+    {
+        printf("Failed to create listener socket\n");
+        exit(EXIT_FAILURE);
+    }
+
+    pthread_t thread_connection_handler;
+    ConnectionInfo connection;
+
+    // accept connections forever
+    while(1)
+    {
+        // accept connection
+        if(tcp_Accept(listener_socket, connection.remote_address, &(connection.remote_port), &(connection.socket)))
+        {
+            printf("ERROR occurred while accepting connection\n");
+            tcp_Disconnect(connection.socket);
+            continue;
+        }
+
+        // create new thread for connection
+        if(pthread_create(&thread_connection_handler, NULL, connectionHandler, (void*)(&connection)) != 0)
+        {
+            fprintf(stderr, "ERROR: Failed to spawn connection handler thread. %s\n", strerror(errno));
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    // shoud never reach here.. throw failure if it does
+    return EXIT_FAILURE;
 }
