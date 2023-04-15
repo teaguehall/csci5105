@@ -2,6 +2,7 @@
 #define MSG_H
 
 #include "peer_info.h"
+#include "file_info.h"
 
 #include <stdlib.h>
 #include <stdint.h>
@@ -20,9 +21,18 @@ int msg_Build_FindRequest(char* out_msg, const char* file_name);
 int msg_Parse_FindRequest(const char* in_msg, char* out_file_name);
 int msg_Build_FindResponse(char* out_msg, int num_of_nodes, const PeerInfo nodes[]);
 int msg_Parse_FindResponse(const char* in_msg, int* out_num_of_nodes, PeerInfo out_nodes[]);
-
+int msg_Build_UpdateListRequest(char* out_msg, int num_of_files, const FileInfo files[]);
+int msg_Parse_UpdateListRequest(const char* in_msg, int* out_num_of_files, const FileInfo out_files[]);
+int msg_Build_UpdateListResponse(char* out_msg);
+int msg_Build_PingRequest(char* out_msg, PeerInfo peer);
+int msg_Parse_PingRequest(const char* in_msg, PeerInfo* out_peer);
+int msg_Build_PingResponse(char* out_msg);
 
 // peer-to-peer messages
+int msg_Build_GetLoadRequest(char* out_msg);
+int msg_Build_GetLoadResponse(char* out_msg, int loads);
+int msg_Parse_GetLoadRequest(const char* in_msg, int* out_loads);
+
 // TODO 
 
 #define MSG_MAGIC_NUMBER                0x12AB34CD
