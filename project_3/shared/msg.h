@@ -21,12 +21,13 @@ int msg_Build_FindRequest(char* out_msg, const char* file_name);
 int msg_Parse_FindRequest(const char* in_msg, char* out_file_name);
 int msg_Build_FindResponse(char* out_msg, int num_of_nodes, const PeerInfo nodes[]);
 int msg_Parse_FindResponse(const char* in_msg, int* out_num_of_nodes, PeerInfo out_nodes[]);
-int msg_Build_UpdateListRequest(char* out_msg, int num_of_files, const FileInfo files[]);
-int msg_Parse_UpdateListRequest(const char* in_msg, int* out_num_of_files, const FileInfo out_files[]);
+int msg_Build_UpdateListRequest(char* out_msg, const PeerInfo* peer_info, int num_of_files, const FileInfo files[]);
+int msg_Parse_UpdateListRequest(const char* in_msg, PeerInfo* out_peer_info, int* out_num_of_files, const FileInfo out_files[]);
 int msg_Build_UpdateListResponse(char* out_msg);
 int msg_Build_PingRequest(char* out_msg, PeerInfo peer);
 int msg_Parse_PingRequest(const char* in_msg, PeerInfo* out_peer);
-int msg_Build_PingResponse(char* out_msg);
+int msg_Build_PingRecognizedResponse(char* out_msg);
+int msg_Build_PingUnRecognizedResponse(char* out_msg);
 
 // peer-to-peer messages
 int msg_Build_GetLoadRequest(char* out_msg);
@@ -37,8 +38,8 @@ int msg_Parse_DownloadRequest(const char* in_msg, char* out_file_name);
 int msg_Build_DownloadResponse(char* out_msg, const FileInfo* file_info, char* file_data);
 int msg_Parse_DownloadResponse(const char* in_msg, FileInfo* out_file_info, char* out_file_data);
 
-#define MSG_MAGIC_NUMBER                0x12AB34CD      // ol' magic
-#define MSG_HEADER_SIZE                 16              // bytes
+#define MSG_MAGIC_NUMBER                    0x12AB34CD      // ol' magic
+#define MSG_HEADER_SIZE                     16              // bytes
 
 // message header:
 // - magic number (uint32 4-bytes)
@@ -46,17 +47,17 @@ int msg_Parse_DownloadResponse(const char* in_msg, FileInfo* out_file_info, char
 // - message ID (uint32 4-bytes)
 // - message size (uint32 4-bytes)
 
-#define MSG_TYPE_ERROR_RESPONSE         0x1000
+#define MSG_TYPE_ERROR_RESPONSE             0x1000
 // message structure:
 // - header (see structure above)
 // - error message (null terminated string)
 
-#define MSG_TYPE_FIND_REQUEST           0x2000
+#define MSG_TYPE_FIND_REQUEST               0x2000
 // message structure:
 // - header (see structure above)
 // - file name (null terminated string)
 
-#define MSG_TYPE_FIND_RESPONSE          0x2001
+#define MSG_TYPE_FIND_RESPONSE              0x2001
 // message structure:
 // - header (see structure above)
 // - number of nodes (uint32 4-bytes)
@@ -65,157 +66,54 @@ int msg_Parse_DownloadResponse(const char* in_msg, FileInfo* out_file_info, char
 //      - latitude (int32 4-bytes)
 //      - longitude (int32 4-bytes)
 
-#define MSG_TYPE_UPDATE_LIST_REQUEST    0x3000
+#define MSG_TYPE_UPDATE_LIST_REQUEST        0x3000
 // message structure:
 // - header (see structure above)
+// - peer address (null terminated string)
+// - peer port (uint32 4-bytes)
+// - peer latitude (int32 4-bytes)
+// - peer longitude (int32 4-bytes)
 // - number of files (uint32 4-bytes)
 //      - file name (null terminated string)
 //      - file size (uint32 4-bytes)
 //      - file check sum (uint32 4-bytes)
 
-#define MSG_TYPE_UPDATE_LIST_RESPONSE   0x3001
+#define MSG_TYPE_UPDATE_LIST_RESPONSE       0x3001
 // message structure:
 // - header (see structure above)
 
-
-//
-
-int msg_Build_PingRequest(char* out_msg, PeerInfo peer);
-int msg_Parse_PingRequest(const char* in_msg, PeerInfo* out_peer);
-
-int msg_Build_PingResponse(char* out_msg);
-int msg_Build_GetLoadRequest(char* out_msg);
-
-int msg_Build_GetLoadResponse(char* out_msg, int loads);
-int msg_Parse_GetLoadRequest(const char* in_msg, int* out_loads);
-
-int msg_Build_DownloadRequest(char* out_msg, const char* file_name);
-int msg_Parse_DownloadRequest(const char* in_msg, char* out_file_name);
-
-int msg_Build_DownloadResponse(char* out_msg, const FileInfo* file_info, char* file_data);
-int msg_Parse_DownloadResponse(const char* in_msg, FileInfo* out_file_info, char* out_file_data);
-
-#define MSG_TYPE_POST_REQUEST           0x2000
+#define MSG_TYPE_PING_REQUEST               0x4000
 // message structure:
-// - magic number (uint32 4-bytes)
-// - message type (uint32 4-bytes)
-// - message ID (uint32 4-bytes)
-// - message size (uint32 4-bytes)
-// - post author (null terminated string)
-// - post title (null terminated string)
-// - post contents (null terminated string)
+// - header (see structure above)
 
-#define MSG_TYPE_POST_RESPONSE          0x2001
+#define MSG_TYPE_PING_RESPONSE_RECOGNIZED   0x4001
 // message structure:
-// - magic number (uint32 4-bytes)
-// - message type (uint32 4-bytes)
-// - message ID (uint32 4-bytes)
-// - message size (uint32 4-bytes)
+// - header (see structure above)
 
-#define MSG_TYPE_READ_REQUEST           0x3000
+#define MSG_TYPE_PING_RESPONSE_UNRECOGNIZED 0x4002
 // message structure:
-// - magic number (uint32 4-bytes)
-// - message type (uint32 4-bytes)
-// - message ID (uint32 4-bytes)
-// - message size (uint32 4-bytes)
-// - page size (uint32 4-bytes)
-// - page number (uint32 4-bytes)
+// - header (see structure above)
 
-#define MSG_TYPE_READ_RESPONSE          0x3001
+#define MSG_TYPE_GET_LOAD_REQUEST           0x5000
 // message structure:
-// - magic number (uint32 4-bytes)
-// - message type (uint32 4-bytes)
-// - message ID (uint32 4-bytes)
-// - message size (uint32 4-bytes)
-// - number of articles (uint32 4-bytes)
-//      - article ID (uint32 4-bytes)
-//      - parent article ID (uint32 4-bytes)
-//      - article depth (uint32 4-bytes)
-//      - article author (null-terminated string)
-//      - article title (null-terminated string)
-//      - article contents (null-terminated string)
+// - header (see structure above)
 
-#define MSG_TYPE_CHOOSE_REQUEST         0x4000
+#define MSG_TYPE_GET_LOAD_RESPONSE          0x5001
 // message structure:
-// - magic number (uint32 4-bytes)
-// - message type (uint32 4-bytes)
-// - message ID (uint32 4-bytes)
-// - message size (uint32 4-bytes)
-// - article ID (uint32 4-bytes)
+// - header (see structure above)
+// - loads (uint32 4-bytes)
 
-#define MSG_TYPE_CHOOSE_RESPONSE        0x4001
+#define MSG_TYPE_DOWNLOAD_REQUEST           0x6000
 // message structure:
-// - magic number (uint32 4-bytes)
-// - message type (uint32 4-bytes)
-// - message ID (uint32 4-bytes)
-// - message size (uint32 4-bytes)
-// - article ID (uint32 4-bytes)
-// - parent article ID (uint32 4-bytes)
-// - article author (null-terminated string)
-// - article title (null-terminated string)
-// - article contents (null-terminated string)
+// - header (see structure above)
+// - file name (null terminated string)
 
-#define MSG_TYPE_REPLY_REQUEST          0x5000
+#define MSG_TYPE_DOWNLOAD_RESPONSE          0x6001
 // message structure:
-// - magic number (uint32 4-bytes)
-// - message type (uint32 4-bytes)
-// - message ID (uint32 4-bytes)
-// - message size (uint32 4-bytes)
-// - article ID to reply (uint32 4-bytes)
-// - post author (null terminated string)
-// - post contents (null terminated string)
-
-#define MSG_TYPE_REPLY_RESPONSE         0x5001
-// message structure:
-// - magic number (uint32 4-bytes)
-// - message type (uint32 4-bytes)
-// - message ID (uint32 4-bytes)
-// - message size (uint32 4-bytes)
-
-#define MSG_TYPE_DB_PUSH_REQUEST        0x6000
-// message structure:
-// - magic number (uint32 4-bytes)
-// - message type (uint32 4-bytes)
-// - message ID (uint32 4-bytes)
-// - message size (uint32 4-bytes)
-// - db version (uint32 4-bytes)
-// - number of db nodes (uint32 4-bytes)
-//      - next article (uint32 4-bytes)
-//      - article ID (uint32 4-bytes)
-//      - parent article ID (uint32 4-bytes)
-//      - article depth (uint32 4-bytes)
-//      - article author (null-terminated string)
-//      - article title (null-terminated string)
-//      - article contents (null-terminated string)
-
-#define MSG_TYPE_DB_PUSH_RESPONSE       0x6001
-// message structure:
-// - magic number (uint32 4-bytes)
-// - message type (uint32 4-bytes)
-// - message ID (uint32 4-bytes)
-// - message size (uint32 4-bytes)
-
-#define MSG_TYPE_DB_PULL_REQUEST        0x7000
-// message structure:
-// - magic number (uint32 4-bytes)
-// - message type (uint32 4-bytes)
-// - message ID (uint32 4-bytes)
-// - message size (uint32 4-bytes)
-
-#define MSG_TYPE_DB_PULL_RESPONSE       0x7001
-// message structure:
-// - magic number (uint32 4-bytes)
-// - message type (uint32 4-bytes)
-// - message ID (uint32 4-bytes)
-// - message size (uint32 4-bytes)
-// - db version (uint32 4-bytes)
-// - number of db nodes (uint32 4-bytes)
-//      - next article (uint32 4-bytes)
-//      - article ID (uint32 4-bytes)
-//      - parent article ID (uint32 4-bytes)
-//      - article depth (uint32 4-bytes)
-//      - article author (null-terminated string)
-//      - article title (null-terminated string)
-//      - article contents (null-terminated string)
+// - header (see structure above)
+// - file name (null terminated string)
+// - file size (uint32 4-bytes)
+// - file check sum (uint32 4-bytes)
+// - file data (raw bytes, corresponding to size in previous "file size" field)
 
 #endif // MSG_H
