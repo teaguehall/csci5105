@@ -4,6 +4,8 @@
 #include <errno.h>
 #include <dirent.h>
 
+#include "ping.h"
+
 #include "../shared/server_info.h"
 #include "../shared/peer_info.h"
 #include "../shared/tcp.h"
@@ -17,10 +19,6 @@
 //
 //#include <stdint.h>
 //#include <arpa/inet.h>
-//
-//#define PAGE_SIZE           10
-//
-//static Article article_buffer[MAX_ARTICLES];
 
 ServerInfo server_info;
 PeerInfo our_info;
@@ -46,7 +44,7 @@ int main(int argc, char* argv[])
     // validate binding address for listener
     if(!tcp_IpAddrIsValid(argv[1]))
     {
-        fprintf(stderr, "ERROR: Invalid binding interface for listening \"%s\" specified\n", argv[1]);
+        fprintf(stderr, "ERROR: Invalid binding interface for listening \"%s\" specified. Exitting...\n", argv[1]);
         exit(EXIT_FAILURE);
     }
     else
@@ -59,7 +57,7 @@ int main(int argc, char* argv[])
     shared_folder = opendir(argv[2]);
     if(shared_folder == NULL)
     {
-        fprintf(stderr, "Error opening shared folder \"%s\": %s\n", argv[2], strerror(errno));
+        fprintf(stderr, "Error opening shared folder \"%s\": %s. Exitting...\n", argv[2], strerror(errno));
         exit(EXIT_FAILURE);
     }
     closedir(shared_folder);
@@ -70,7 +68,7 @@ int main(int argc, char* argv[])
     our_info.latitude = strtod(argv[3], &endptr);
     if(endptr == argv[3] || our_info.latitude < -90.0 || our_info.latitude > 90.0)
     {
-        fprintf(stderr, "ERROR: Invalid latitude of node \"%s\" provided (-90.0 thru 90.0 allowed)\n", argv[3]);
+        fprintf(stderr, "ERROR: Invalid latitude of node \"%s\" provided (-90.0 thru 90.0 allowed). Exitting...\n", argv[3]);
         exit(EXIT_FAILURE);
     }
 
@@ -78,7 +76,7 @@ int main(int argc, char* argv[])
     our_info.longitude = strtod(argv[4], &endptr);
     if(endptr == argv[4] || our_info.longitude < -180.0 || our_info.longitude > 180.0)
     {
-        fprintf(stderr, "ERROR: Invalid longitude of node \"%s\" provided (-180.0 thru 180.0 allowed)\n", argv[4]);
+        fprintf(stderr, "ERROR: Invalid longitude of node \"%s\" provided (-180.0 thru 180.0 allowed). Exitting...\n", argv[4]);
         exit(EXIT_FAILURE);
     }
 
@@ -86,7 +84,7 @@ int main(int argc, char* argv[])
     strcpy(server_info.address, argv[5]);
     if(!tcp_IpAddrIsValid(server_info.address))
     {
-        fprintf(stderr, "ERROR: Invalid server address \"%s\" provided\n", argv[5]);
+        fprintf(stderr, "ERROR: Invalid server address \"%s\" provided. Exitting...\n", argv[5]);
         exit(EXIT_FAILURE);
     }
 
@@ -94,7 +92,7 @@ int main(int argc, char* argv[])
     server_info.port = atoi(argv[6]);
     if(!tcp_PortIsValid(server_info.port))
     {
-        fprintf(stderr, "ERROR: Invalid server address \"%s\" provided\n", argv[6]);
+        fprintf(stderr, "ERROR: Invalid server address \"%s\" provided. Exitting...\n", argv[6]);
         exit(EXIT_FAILURE);
     }
 
@@ -114,11 +112,19 @@ int main(int argc, char* argv[])
     // make sure we actually found a port
     if(listener_socket == -1)
     {
-        fprintf(stderr, "ERROR: Peer failed to create listening socket\n");
+        fprintf(stderr, "ERROR: Peer failed to create listening socket. Exitting...\n");
         exit(EXIT_FAILURE);
     }
 
     // start ping thread
+    if(ping_Init(&our_info))
+    {
+        fprintf(stderr, "ERROR: Failed to initialize ping module. Exitting...\n");
+        exit(EXIT_FAILURE);
+    }
+
+    // start broadcast thread
+
     // response for publishing 
 
     // start UI thread
