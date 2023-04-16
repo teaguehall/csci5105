@@ -14,7 +14,7 @@ int msg_Parse_Header(const char* in_msg, uint32_t* out_type, int32_t* out_id, ui
 
 // common messages
 int msg_Build_ErrorResponse(char* out_msg, char* in_err_string);
-int msg_Parse_ErrorResponse(char* in_msg, char* out_error_msg);
+int msg_Parse_ErrorResponse(const char* in_msg, char* out_error_msg);
 
 // peer-to-server messages
 int msg_Build_FindRequest(char* out_msg, const char* file_name);

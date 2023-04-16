@@ -38,6 +38,7 @@ int main(int argc, char * argv[])
 
     int listener_socket = -1;
 
+    // TODO - allow peers to listen on ethernet interface as well as localhost
     // create listener socket
     if(tcp_CreateListener(argv[1], atoi(argv[2]), &listener_socket))
     {

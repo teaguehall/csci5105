@@ -2,12 +2,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <dirent.h>
+
+#include "../shared/tcp.h"
 
 //#include "render.h"
 //#include "../shared/net.h"
 //#include "../shared/msg.h"
 //#include "../shared/article.h"
-//#include "../shared/tcp.h"
+
+
 //
 //#include <stdint.h>
 //#include <arpa/inet.h>
@@ -16,53 +20,71 @@
 //
 //static Article article_buffer[MAX_ARTICLES];
 
-int main(int argc, char * argv[])
+int main(int argc, char* argv[])
 {
+    // verify number of input arguments
+    if(argc < 4 || argc > 4)
+    {
+        fprintf(stderr, "\n");
+        fprintf(stderr, "EROR: Unexpected number of input arguments received. Expected:\n");
+        fprintf(stderr, " * REQUIRED: Listener Interface (xxx.xxx.xxx.xxx)\n");
+        fprintf(stderr, " * REQUIRED: Share Directory Path\n");
+        fprintf(stderr, " * REQUIRED: Server Address (xxx.xxx.xxx.xxx)\n");
+        fprintf(stderr, " * REQUIRED: Server Port Number\n");
+        // TODO add optional args for test scenarios
+        fprintf(stderr, "\n");
+        exit(EXIT_FAILURE);
+    }
+
+    // validate server address
+    if(!tcp_IpAddrIsValid(argv[3]))
+    {
+        fprintf(stderr, "ERROR: Invalid server address \"%s\" provided\n", argv[3]);
+        exit(EXIT_FAILURE);
+    }
+
+    // verify shared folder exists
+     DIR *shared_folder;
+    shared_folder = opendir(argv[2]);
+    if(shared_folder == NULL)
+    {
+        fprintf(stderr, "Error opening shared folder \"%s\": %s\n", argv[2], strerror(errno));
+        exit(EXIT_FAILURE);
+    }
+    closedir(shared_folder);
+
+    // validate server address
+    if(!tcp_IpAddrIsValid(argv[3]))
+    {
+        fprintf(stderr, "ERROR: Invalid server address \"%s\" provided\n", argv[3]);
+        exit(EXIT_FAILURE);
+    }
+
+    // validate server port
+    if(!tcp_PortIsValid(atoi(argv[4])))
+    {
+        fprintf(stderr, "ERROR: Invalid server address \"%s\" provided\n", argv[4]);
+        exit(EXIT_FAILURE);
+    }
+
+    // start ping thread
+    // response for publishing 
+
+    // start UI thread
+
+    // start ping thread
+
+    // update 
+
+    // start ping thread
+
+    // start connection handler thread
+    // TODO
+
+    // start 
+
     
-    printf("Hello from peer!\n");
-    return 0;
     
-    //char command[1024];
-    //int semicolon_count;
-    //int semicolon_1_pos;
-    //int semicolon_2_pos;
-    //int i;
-    //uint32_t articles_read;
-//
-    ////int article_id;
-    //unsigned int article_id;
-    //char article_id_str[ARTICLE_MAX_TITLE];
-    //char article_title[ARTICLE_MAX_TITLE];
-    //char article_contents[ARTICLE_MAX_CONTENTS];
-//
-    //// verify number of input arguments
-    //if(argc < 4 || argc > 4)
-    //{
-    //    fprintf(stderr, "\n");
-    //    fprintf(stderr, "EROR: Unexpected number of input arguments received. Expected:\n");
-    //    fprintf(stderr, " * REQUIRED: Your Name (posts will be tagged with your name as the author)\n");
-    //    fprintf(stderr, " * REQUIRED: Server Address\n");
-    //    fprintf(stderr, " * REQUIRED: Server Port Number\n");
-    //    // TODO add optional args for test scenarios
-    //    fprintf(stderr, "\n");
-//
-    //    exit(EXIT_FAILURE);
-    //}
-//
-    //// validate server address
-    //if(!tcp_IpAddrIsValid(argv[2]))
-    //{
-    //    fprintf(stderr, "ERROR: Invalid server address \"%s\" provided\n", argv[2]);
-    //    exit(EXIT_FAILURE);
-    //}
-//
-    //// validate port number
-    //if(!tcp_PortIsValid(atoi(argv[3])))
-    //{
-    //    fprintf(stderr, "ERROR: Invalid server address \"%s\" provided\n", argv[2]);
-    //    exit(EXIT_FAILURE);
-    //}
-    //
     //// save server info 
     //char* server_addr;
     //int server_port;
