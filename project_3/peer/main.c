@@ -4,6 +4,7 @@
 #include <errno.h>
 #include <dirent.h>
 
+#include "../shared/server_info.h"
 #include "../shared/peer_info.h"
 #include "../shared/tcp.h"
 
@@ -21,12 +22,11 @@
 //
 //static Article article_buffer[MAX_ARTICLES];
 
+ServerInfo server_info;
+PeerInfo our_info;
 
 int main(int argc, char* argv[])
 {
-    PeerInfo peer;
-    
-    
     // verify number of input arguments
     if(argc < 7 || argc > 7)
     {
@@ -51,7 +51,7 @@ int main(int argc, char* argv[])
     }
     else
     {
-        memcpy(peer.address, argv[1], strlen(argv[1]) + 1);
+        memcpy(our_info.address, argv[1], strlen(argv[1]) + 1);
     }
 
     // verify shared folder exists
@@ -67,34 +67,54 @@ int main(int argc, char* argv[])
     char* endptr;
 
     // validate latitude coordinate
-    peer.latitude = strtod(argv[3], &endptr);
-    if(endptr == argv[3] || peer.latitude < -90.0 || peer.latitude > 90.0)
+    our_info.latitude = strtod(argv[3], &endptr);
+    if(endptr == argv[3] || our_info.latitude < -90.0 || our_info.latitude > 90.0)
     {
         fprintf(stderr, "ERROR: Invalid latitude of node \"%s\" provided (-90.0 thru 90.0 allowed)\n", argv[3]);
         exit(EXIT_FAILURE);
     }
 
     // validate longitude coordinate
-    peer.longitude = strtod(argv[4], &endptr);
-    if(endptr == argv[4] || peer.longitude < -180.0 || peer.longitude > 180.0)
+    our_info.longitude = strtod(argv[4], &endptr);
+    if(endptr == argv[4] || our_info.longitude < -180.0 || our_info.longitude > 180.0)
     {
         fprintf(stderr, "ERROR: Invalid longitude of node \"%s\" provided (-180.0 thru 180.0 allowed)\n", argv[4]);
         exit(EXIT_FAILURE);
     }
 
     // validate server address
-    strcpy(peer.address, argv[5]);
-    if(!tcp_IpAddrIsValid(peer.address))
+    strcpy(server_info.address, argv[5]);
+    if(!tcp_IpAddrIsValid(server_info.address))
     {
         fprintf(stderr, "ERROR: Invalid server address \"%s\" provided\n", argv[5]);
         exit(EXIT_FAILURE);
     }
 
     // validate server port
-    peer.port = atoi(argv[6]);
-    if(!tcp_PortIsValid(peer.port))
+    server_info.port = atoi(argv[6]);
+    if(!tcp_PortIsValid(server_info.port))
     {
         fprintf(stderr, "ERROR: Invalid server address \"%s\" provided\n", argv[6]);
+        exit(EXIT_FAILURE);
+    }
+
+    int listener_socket = -1;
+
+    // create listener socket (note: we will automatically find available port to listen on, hence the loop)
+    for(our_info.port = 1024; our_info.port <= 65535; our_info.port++)
+    {
+        if(!tcp_CreateListener(our_info.address, our_info.port, &listener_socket))
+        {
+            break; // successfully created listener socket
+        }
+
+        listener_socket = -1; // reset socket to known value
+    }
+
+    // make sure we actually found a port
+    if(listener_socket == -1)
+    {
+        fprintf(stderr, "ERROR: Peer failed to create listening socket\n");
         exit(EXIT_FAILURE);
     }
 
