@@ -4,6 +4,7 @@
 #include <errno.h>
 #include <dirent.h>
 
+#include "../shared/peer_info.h"
 #include "../shared/tcp.h"
 
 //#include "render.h"
@@ -20,27 +21,37 @@
 //
 //static Article article_buffer[MAX_ARTICLES];
 
+
 int main(int argc, char* argv[])
 {
+    PeerInfo peer;
+    char* endptr;
+    
     // verify number of input arguments
-    if(argc < 4 || argc > 4)
+    if(argc < 7 || argc > 7)
     {
         fprintf(stderr, "\n");
-        fprintf(stderr, "EROR: Unexpected number of input arguments received. Expected:\n");
-        fprintf(stderr, " * REQUIRED: Listener Interface (xxx.xxx.xxx.xxx)\n");
-        fprintf(stderr, " * REQUIRED: Share Directory Path\n");
-        fprintf(stderr, " * REQUIRED: Server Address (xxx.xxx.xxx.xxx)\n");
-        fprintf(stderr, " * REQUIRED: Server Port Number\n");
+        fprintf(stderr, "ERROR: Unexpected number of input arguments received. Expected:\n");
+        fprintf(stderr, " * REQUIRED: Peer - Binding Interface (e.g. 127.0.0.1)\n");
+        fprintf(stderr, " * REQUIRED: Peer - Path to Shared Directory\n");
+        fprintf(stderr, " * REQUIRED: Peer - Latitude Location (-90 to 90) \n");
+        fprintf(stderr, " * REQUIRED: Peer - Latitude Location (-180 to 180) \n");
+        fprintf(stderr, " * REQUIRED: Server - Address (xxx.xxx.xxx.xxx)\n");
+        fprintf(stderr, " * REQUIRED: Server - Port\n");
         // TODO add optional args for test scenarios
         fprintf(stderr, "\n");
         exit(EXIT_FAILURE);
     }
 
-    // validate server address
-    if(!tcp_IpAddrIsValid(argv[3]))
+    // validate binding address for listener
+    if(!tcp_IpAddrIsValid(argv[1]))
     {
-        fprintf(stderr, "ERROR: Invalid server address \"%s\" provided\n", argv[3]);
+        fprintf(stderr, "ERROR: Invalid binding interface for listening \"%s\" specified\n", argv[1]);
         exit(EXIT_FAILURE);
+    }
+    else
+    {
+        memcpy(peer.address, argv[1], strlen(argv[1]) + 1);
     }
 
     // verify shared folder exists
@@ -52,6 +63,16 @@ int main(int argc, char* argv[])
         exit(EXIT_FAILURE);
     }
     closedir(shared_folder);
+
+    // validate latitude coordinate
+    peer.latitude = strtod(argv[3], &endptr);
+
+    if(!tcp_IpAddrIsValid(argv[1]))
+    {
+        fprintf(stderr, "ERROR: Invalid binding interface for listening \"%s\" specified\n", argv[1]);
+        exit(EXIT_FAILURE);
+    }
+
 
     // validate server address
     if(!tcp_IpAddrIsValid(argv[3]))
