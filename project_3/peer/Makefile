@@ -4,10 +4,10 @@ OUT						:= ../peer.out
 SRCS					:= $(wildcard ./*.c)
 OBJS					:= $(patsubst ./%.c,./%.o,$(SRCS))
 STATIC_LIBS				+= ../shared/libshared.a
-DYNAMICS_LIBS			+= -lpthread
+DYNAMIC_LIBS			+= -lpthread
 
 $(OUT): $(OBJS)
-	$(CC) $(CFLAGS) $(OBJS) $(STATIC_LIBS) -o $(OUT)
+	$(CC) $(CFLAGS) $(OBJS) $(STATIC_LIBS) -o $(OUT) $(DYNAMIC_LIBS)
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@

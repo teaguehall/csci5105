@@ -25,7 +25,7 @@
 int main(int argc, char* argv[])
 {
     PeerInfo peer;
-    char* endptr;
+    
     
     // verify number of input arguments
     if(argc < 7 || argc > 7)
@@ -64,27 +64,37 @@ int main(int argc, char* argv[])
     }
     closedir(shared_folder);
 
+    char* endptr;
+
     // validate latitude coordinate
     peer.latitude = strtod(argv[3], &endptr);
-
-    if(!tcp_IpAddrIsValid(argv[1]))
+    if(endptr == argv[3] || peer.latitude < -90.0 || peer.latitude > 90.0)
     {
-        fprintf(stderr, "ERROR: Invalid binding interface for listening \"%s\" specified\n", argv[1]);
+        fprintf(stderr, "ERROR: Invalid latitude of node \"%s\" provided (-90.0 thru 90.0 allowed)\n", argv[3]);
         exit(EXIT_FAILURE);
     }
 
+    // validate longitude coordinate
+    peer.longitude = strtod(argv[4], &endptr);
+    if(endptr == argv[4] || peer.longitude < -180.0 || peer.longitude > 180.0)
+    {
+        fprintf(stderr, "ERROR: Invalid longitude of node \"%s\" provided (-180.0 thru 180.0 allowed)\n", argv[4]);
+        exit(EXIT_FAILURE);
+    }
 
     // validate server address
-    if(!tcp_IpAddrIsValid(argv[3]))
+    strcpy(peer.address, argv[5]);
+    if(!tcp_IpAddrIsValid(peer.address))
     {
-        fprintf(stderr, "ERROR: Invalid server address \"%s\" provided\n", argv[3]);
+        fprintf(stderr, "ERROR: Invalid server address \"%s\" provided\n", argv[5]);
         exit(EXIT_FAILURE);
     }
 
     // validate server port
-    if(!tcp_PortIsValid(atoi(argv[4])))
+    peer.port = atoi(argv[6]);
+    if(!tcp_PortIsValid(peer.port))
     {
-        fprintf(stderr, "ERROR: Invalid server address \"%s\" provided\n", argv[4]);
+        fprintf(stderr, "ERROR: Invalid server address \"%s\" provided\n", argv[6]);
         exit(EXIT_FAILURE);
     }
 

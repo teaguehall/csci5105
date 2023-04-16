@@ -6,8 +6,8 @@ typedef struct PeerInfo
     char address[256];
     int port;
 
-    int latitude;
-    int longtitude;
+    double latitude;
+    double longitude;
 
 } PeerInfo;
 
