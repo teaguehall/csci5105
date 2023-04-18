@@ -36,6 +36,9 @@
         "connection_handler.h": "c",
         "request_handler.h": "c",
         "msg_handler.h": "c",
-        "dirent.h": "c"
+        "dirent.h": "c",
+        "server_info.h": "c",
+        "assumptions.h": "c",
+        "peer_info.h": "c"
     }
 }

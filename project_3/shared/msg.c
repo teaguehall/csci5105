@@ -136,3 +136,8 @@ int msg_Parse_PingResponse(char* out_msg, int* out_recognized)
 {
     return 0; // TODO
 }
+
+int msg_Build_UpdateListRequest(char* out_msg, const PeerInfo* peer_info, int num_of_files, const FileInfo files[])
+{
+    return 0; // TODO
+}
