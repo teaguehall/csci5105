@@ -3,8 +3,8 @@
 
 typedef struct ServerInfo
 {
-    char address[256];
-    int port;
+    char listening_addr[256];
+    int listening_port;
 
 } ServerInfo;
 

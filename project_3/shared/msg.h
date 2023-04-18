@@ -24,10 +24,10 @@ int msg_Parse_FindResponse(const char* in_msg, int* out_num_of_nodes, PeerInfo o
 int msg_Build_UpdateListRequest(char* out_msg, const PeerInfo* peer_info, int num_of_files, const FileInfo files[]);
 int msg_Parse_UpdateListRequest(const char* in_msg, PeerInfo* out_peer_info, int* out_num_of_files, const FileInfo out_files[]);
 int msg_Build_UpdateListResponse(char* out_msg);
-int msg_Build_PingRequest(char* out_msg, PeerInfo peer);
+int msg_Build_PingRequest(char* out_msg, const PeerInfo* peer);
 int msg_Parse_PingRequest(const char* in_msg, PeerInfo* out_peer);
-int msg_Build_PingRecognizedResponse(char* out_msg);
-int msg_Build_PingUnRecognizedResponse(char* out_msg);
+int msg_Build_PingResponse(char* out_msg, int recognized);
+int msg_Parse_PingResponse(char* out_msg, int* out_recognized);
 
 // peer-to-peer messages
 int msg_Build_GetLoadRequest(char* out_msg);
@@ -86,11 +86,7 @@ int msg_Parse_DownloadResponse(const char* in_msg, FileInfo* out_file_info, char
 // message structure:
 // - header (see structure above)
 
-#define MSG_TYPE_PING_RESPONSE_RECOGNIZED   0x4001
-// message structure:
-// - header (see structure above)
-
-#define MSG_TYPE_PING_RESPONSE_UNRECOGNIZED 0x4002
+#define MSG_TYPE_PING_RESPONSE              0x4001
 // message structure:
 // - header (see structure above)
 

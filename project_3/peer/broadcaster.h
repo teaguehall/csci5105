@@ -6,6 +6,5 @@
 
 // returns 0 on success, -1 on error
 int broadcaster_Init(ServerInfo* server_info, PeerInfo* peer_info, const char* shared_dir);
-int broadcaster_Force(void);
 
 #endif // PEER_BROADCASTER_H
