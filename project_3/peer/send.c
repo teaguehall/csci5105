@@ -136,8 +136,110 @@ int send_UpdateListRequest(const ServerInfo* server, const PeerInfo* us, size_t 
     return 0;
 }
 
-//int send_UpdateListRequest(const ServerInfo* server, size_t file_count, const FileInfo[] files);
-//int send_DiscoverRequest(const ServerInfo* server, int* out_file_count, FileInfo[] out_files);
-//int send_FindRequest(const ServerInfo* server, const char* file_name, int* out_peer_count, PeerInfo[] out_peers);
-//int send_GetLoadsRequest(const PeerInfo* peer, int* out_loads);
-//int send_DownloadRequest(const PeerInfo* peer, const char* file_name, int* out_file);
+int send_DiscoverRequest(const ServerInfo* server, int* out_file_count, FileInfo out_files[])
+{
+    char send_msg[MAX_MSG_SIZE_BYTES];
+    char recv_msg[MAX_MSG_SIZE_BYTES];
+
+    // build message
+    if(msg_Build_DiscoverRequest(send_msg))
+    {
+        return -1;
+    }
+
+    // transmit message
+    if(send_recv(server->listening_addr, server->listening_port, send_msg, recv_msg))
+    {
+        return -1;
+    }
+
+    // parse response
+    if(msg_Parse_DiscoverResponse(recv_msg, out_file_count, out_files))
+    {
+        return -1;
+    }
+
+    // success
+    return 0;
+}
+
+int send_FindRequest(const ServerInfo* server, const char* file_name, int* out_peer_count, PeerInfo out_peers[])
+{
+    char send_msg[MAX_MSG_SIZE_BYTES];
+    char recv_msg[MAX_MSG_SIZE_BYTES];
+
+    // build message
+    if(msg_Build_FindRequest(send_msg, file_name))
+    {
+        return -1;
+    }
+
+    // transmit message
+    if(send_recv(server->listening_addr, server->listening_port, send_msg, recv_msg))
+    {
+        return -1;
+    }
+
+    // parse response
+    if(msg_Parse_FindResponse(recv_msg, out_peer_count, out_peers))
+    {
+        return -1;
+    }
+
+    // success
+    return 0;
+}
+
+int send_GetLoadsRequest(const PeerInfo* peer, int* out_loads)
+{
+    char send_msg[MAX_MSG_SIZE_BYTES];
+    char recv_msg[MAX_MSG_SIZE_BYTES];
+
+    // build message
+    if(msg_Build_GetLoadRequest(send_msg))
+    {
+        return -1;
+    }
+
+    // transmit message
+    if(send_recv(peer->listening_addr, peer->listening_port, send_msg, recv_msg))
+    {
+        return -1;
+    }
+
+    // parse response
+    if(msg_Parse_GetLoadResponse(recv_msg, out_loads))
+    {
+        return -1;
+    }
+
+    // success
+    return 0;
+}
+
+int send_DownloadRequest(const PeerInfo* peer, const char* file_name, FileInfo* out_file_info, char* out_file_data)
+{
+    char send_msg[MAX_MSG_SIZE_BYTES];
+    char recv_msg[MAX_MSG_SIZE_BYTES];
+
+    // build message
+    if(msg_Build_DownloadRequest(send_msg, file_name))
+    {
+        return -1;
+    }
+
+    // transmit message
+    if(send_recv(peer->listening_addr, peer->listening_port, send_msg, recv_msg))
+    {
+        return -1;
+    }
+
+    // parse response
+    if(msg_Parse_DownloadResponse(recv_msg, out_file_info, out_file_data))
+    {
+        return -1;
+    }
+
+    // success
+    return 0;    
+}

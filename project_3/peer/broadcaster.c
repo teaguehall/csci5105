@@ -33,7 +33,7 @@ static void get_file_info(int do_checksum, int* out_file_count, FileInfo out_fil
     }
 
     // iterate over files
-    while((pentry = readdir(pdir)) != NULL && (*out_file_count < MAX_FILES_PER_NODE)) 
+    while((pentry = readdir(pdir)) != NULL && (*out_file_count < MAX_FILES_PER_PEER)) 
     {
         // ignore the . and .. entries
         if(strcmp(pentry->d_name, ".") == 0 || strcmp(pentry->d_name, "..") == 0)
@@ -43,17 +43,19 @@ static void get_file_info(int do_checksum, int* out_file_count, FileInfo out_fil
 
         // copy file name to output
         strcpy(out_files[*out_file_count].name, pentry->d_name);
-        printf("file name = %s\n", pentry->d_name);
-
+        
         // calculate file size and checksum if asked to do so
         if(do_checksum)
         {
-            if(checksum(out_files + (*out_file_count)))
+            if(checksum(_shared_dir, out_files + (*out_file_count)))
             {
                 fprintf(stderr, "Failed to compute checksum on \"%s\"\n", out_files[*out_file_count].name);
                 goto close;
             }
         }
+
+        // TODO delete debug
+        //printf("Name: %s, Size: %u, CRC: %u\n", out_files[*out_file_count].name, out_files[*out_file_count].size, out_files[*out_file_count].check_sum);
 
         // increment file count
         (*out_file_count)++;
@@ -65,9 +67,9 @@ static void get_file_info(int do_checksum, int* out_file_count, FileInfo out_fil
 }
 
 static void broadcast(void)
-{
+{    
     int file_count;
-    FileInfo files[MAX_FILES_PER_NODE];
+    FileInfo files[MAX_FILES_PER_PEER];
     
     // get file info
     get_file_info(1, &file_count, files);
@@ -93,7 +95,7 @@ static void* threadPing(void *vargp)
         }
         else
         {
-            // if server doesn't recognize us, broadcast our info
+            // if server doesn't recognize us (because it crashed and restarted...), broadcast our info
             if(!recognized)
             {
                 broadcast();
@@ -110,8 +112,8 @@ static void* threadFileMonitor(void *vargp)
 {
     int prev_count = 0;
     int curr_count = 0;
-    FileInfo prev_files[MAX_FILES_PER_NODE];
-    FileInfo curr_files[MAX_FILES_PER_NODE];
+    FileInfo prev_files[MAX_FILES_PER_PEER];
+    FileInfo curr_files[MAX_FILES_PER_PEER];
     
     // check for change in files once per second
     while(1)
@@ -157,10 +159,6 @@ int broadcaster_Init(ServerInfo* server_info, PeerInfo* peer_info, const char* s
     _server_info = *server_info;
     _peer_info = *peer_info;
     strcpy(_shared_dir, shared_dir);
-
-    // TODO delete
-    broadcast();
-    return 0;
 
     // spawn file monitor thread
     if(pthread_create(&thread_file_monitor, NULL, threadFileMonitor, NULL) != 0)

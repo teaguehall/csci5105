@@ -39,6 +39,8 @@
         "dirent.h": "c",
         "server_info.h": "c",
         "assumptions.h": "c",
-        "peer_info.h": "c"
+        "peer_info.h": "c",
+        "typeindex": "c",
+        "typeinfo": "c"
     }
 }

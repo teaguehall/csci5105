@@ -11,6 +11,11 @@
 #include "../shared/tcp.h"
 #include "../shared/msg.h"
 
+void msgHandler_DiscoverRequest(ConnectionInfo* connection_info, char* msg)
+{
+    printf("TODO - msgHandler_DiscoverRequest\n");
+}
+
 void msgHandler_FindRequest(ConnectionInfo* connection_info, char* msg)
 {
     printf("TODO - msgHandler_FindRequest\n");
@@ -70,6 +75,9 @@ void* connectionHandler(void* vargp)
     // process message
     switch(msg_recv_type)
     {
+        case MSG_TYPE_DISCOVER_REQUEST :
+            msgHandler_DiscoverRequest(&connection, rcvd_msg);
+            break;
         case MSG_TYPE_FIND_REQUEST :
             msgHandler_FindRequest(&connection, rcvd_msg);
             break;

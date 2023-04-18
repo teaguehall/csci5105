@@ -5,6 +5,7 @@
 #include <pthread.h>
 
 #include "connection_handler.h"
+#include "database.h"
 
 #include "../shared/tcp.h"
 
@@ -37,6 +38,13 @@ int main(int argc, char * argv[])
     }
 
     int listener_socket = -1;
+
+    // initialize database
+    if(db_Init())
+    {
+        fprintf(stderr, "ERROR: Database failed to initialize\n");
+        exit(EXIT_FAILURE);
+    }
 
     // create listener socket
     if(tcp_CreateListener(argv[1], atoi(argv[2]), &listener_socket))
