@@ -70,7 +70,34 @@ void msgHandler_FindRequest(ConnectionInfo* connection_info, char* msg)
 
 void msgHandler_UpdateListRequest(ConnectionInfo* connection_info, char* msg)
 {
-    printf("TODO - msgHandler_UpdateListRequest\n");
+    char response[MAX_MSG_SIZE_BYTES];
+    PeerInfo peer;
+    int num_of_files;
+    FileInfo files[MAX_FILES_PER_PEER];
+
+    // parse received message
+    if(msg_Parse_UpdateListRequest(msg, &peer, &num_of_files, files))
+    {
+        msg_Build_ErrorResponse(response, "Server received ill-formatted UPDATELIST-REQUEST message");
+    }
+    else
+    {
+        // add peer info to database
+        if(db_AddPeer(&peer, num_of_files, files))
+        {
+            msg_Build_ErrorResponse(response, "Server has reached max peer capacity. Wait until another peer leaves the network.");
+        }
+        else
+        {
+            msg_Build_UpdateListResponse(response);
+        }
+    }
+
+    // send response
+    if(tcp_Send(connection_info->socket, response, msg_GetActualSize(response), 5))
+    {
+        fprintf(stderr, "ERROR: Server failed to send UPDATE-LIST-RESPONSE\n");
+    }
 }
 
 void msgHandler_PingRequest(ConnectionInfo* connection_info, char* msg)
@@ -78,8 +105,6 @@ void msgHandler_PingRequest(ConnectionInfo* connection_info, char* msg)
     char response[MAX_MSG_SIZE_BYTES];
     PeerInfo peer;
     int recognized;
-
-    int db_KeepAlive(const PeerInfo* peer);
 
     // parse received message
     if(msg_Parse_PingRequest(msg, &peer))
@@ -97,10 +122,10 @@ void msgHandler_PingRequest(ConnectionInfo* connection_info, char* msg)
         {
             recognized = 1;
         }
-    }
 
-    // build response
-    msg_Build_PingResponse(response, recognized);
+        // build response
+        msg_Build_PingResponse(response, recognized);
+    }
 
     // send response
     if(tcp_Send(connection_info->socket, response, msg_GetActualSize(response), 5))
@@ -126,12 +151,15 @@ void msgHandler_UnknownRequest(ConnectionInfo* connection_info, uint32_t msg_typ
 }
 
 void* connectionHandler(void* vargp)
-{
+{    
     ConnectionInfo connection;
     char rcvd_msg[MAX_MSG_SIZE_BYTES];
 
     // cast arguments to local variables
     memcpy(&connection, vargp, sizeof(connection));
+
+    // free the temporary connection object that was passed in
+    free(vargp);
     
     uint32_t msg_recv_type;
     int32_t msg_recv_id;

@@ -77,7 +77,7 @@ static void broadcast(void)
     // broadcast files to server
     if(send_UpdateListRequest(&_server_info, &_peer_info, file_count, files))
     {
-        fprintf(stderr, "WARN: Failed to broadcast files to server.");
+        fprintf(stderr, "WARN: Failed to broadcast files to server.\n");
     }
 }
 
@@ -98,6 +98,7 @@ static void* threadPing(void *vargp)
             // if server doesn't recognize us (because it crashed and restarted...), broadcast our info
             if(!recognized)
             {
+                printf("Ping wasn't recognized, broadcast\n"); // TODO
                 broadcast();
             }
         }
@@ -124,6 +125,7 @@ static void* threadFileMonitor(void *vargp)
         // broadcast files if they have changed
         if(curr_count != prev_count)
         {
+            printf("File montioring broadcast: new file count\n"); // TODO
             broadcast();
         }
         else
@@ -133,6 +135,7 @@ static void* threadFileMonitor(void *vargp)
             {
                 if(strcmp(curr_files[i].name, prev_files[i].name) != 0)
                 {
+                    printf("File montioring broadcast: change in file count\n"); // TODO
                     broadcast();
                     break;
                 }

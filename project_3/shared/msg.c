@@ -358,7 +358,7 @@ int msg_Build_UpdateListRequest(char* out_msg, const PeerInfo* peer_info, int nu
     *(int32_t*)(out_msg + MSG_HEADER_SIZE + bytes_written) = htonl(peer_info->longitude);
     bytes_written += 4;
 
-    // write peer port
+    // write number of files
     *(uint32_t*)(out_msg + MSG_HEADER_SIZE + bytes_written) = htonl(num_of_files);
     bytes_written += 4;
 

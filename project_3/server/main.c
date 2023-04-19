@@ -3,6 +3,7 @@
 #include <string.h>
 #include <errno.h>
 #include <pthread.h>
+#include <unistd.h>
 
 #include "connection_handler.h"
 #include "database.h"
@@ -54,21 +55,29 @@ int main(int argc, char * argv[])
     }
 
     pthread_t thread_connection_handler;
-    ConnectionInfo connection;
 
     // accept connections forever
     while(1)
     {
+        // malloc new connection object (connection handler will be responsible for freeing this)
+        ConnectionInfo* connection = malloc(sizeof(ConnectionInfo));
+        if(connection == NULL)
+        {
+            fprintf(stderr, "FATAL: Failed to malloc new connection object for connection handler thread\n");
+            exit(EXIT_FAILURE);
+        }
+        
         // accept connection
-        if(tcp_Accept(listener_socket, connection.remote_address, &(connection.remote_port), &(connection.socket)))
+        if(tcp_Accept(listener_socket, connection->remote_address, &(connection->remote_port), &(connection->socket)))
         {
             printf("ERROR occurred while accepting connection\n");
-            tcp_Disconnect(connection.socket);
+            tcp_Disconnect(connection->socket);
+            free(connection);
             continue;
         }
 
         // create new thread for connection
-        if(pthread_create(&thread_connection_handler, NULL, connectionHandler, (void*)(&connection)) != 0)
+        if(pthread_create(&thread_connection_handler, NULL, connectionHandler, (void*)(connection)) != 0)
         {
             fprintf(stderr, "ERROR: Failed to spawn connection handler thread. %s\n", strerror(errno));
             exit(EXIT_FAILURE);

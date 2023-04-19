@@ -6,6 +6,7 @@
 #include <pthread.h>
 
 #include "broadcaster.h"
+#include "ui.h"
 #include "request_handler.h"
 
 #include "../shared/server_info.h"
@@ -114,6 +115,13 @@ int main(int argc, char* argv[])
 
     // initialize broadcaster
     if(broadcaster_Init(&server_info, &our_info, shared_folder))
+    {
+        fprintf(stderr, "ERROR: Failed to initialize broadcaster module. Exitting...\n");
+        exit(EXIT_FAILURE);
+    }
+
+    // initialize ui
+    if(ui_Init(&server_info, &our_info, shared_folder))
     {
         fprintf(stderr, "ERROR: Failed to initialize broadcaster module. Exitting...\n");
         exit(EXIT_FAILURE);

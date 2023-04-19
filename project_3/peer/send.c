@@ -119,7 +119,7 @@ int send_UpdateListRequest(const ServerInfo* server, const PeerInfo* us, size_t 
 {
     char send_msg[MAX_MSG_SIZE_BYTES];
     char recv_msg[MAX_MSG_SIZE_BYTES];
-
+    
     // build message
     if(msg_Build_UpdateListRequest(send_msg, us, file_count, files))
     {
@@ -190,7 +190,7 @@ int send_FindRequest(const ServerInfo* server, const char* file_name, int* out_p
     return 0;
 }
 
-int send_GetLoadsRequest(const PeerInfo* peer, int* out_loads)
+int send_GetLoadRequest(const PeerInfo* peer, int* out_loads)
 {
     char send_msg[MAX_MSG_SIZE_BYTES];
     char recv_msg[MAX_MSG_SIZE_BYTES];

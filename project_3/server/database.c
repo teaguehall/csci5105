@@ -12,6 +12,8 @@
 
 #define TIMEOUT_SEC 5
 
+static int peer_count = 0;
+
 typedef struct DbEntry
 {
     int active;
@@ -43,7 +45,9 @@ static void* threadTimeoutMonitor(void *vargp)
         {
             if(db[i].active && (curr_time - db[i].timestamp) > TIMEOUT_SEC)
             {
-                printf("INFO: Peer %s:%d timed-out\n", db[i].peer.listening_addr, db[i].peer.listening_port);
+                db[i].active = 0;
+                peer_count--;
+                printf("INFO: Peer \"%s:%d\" left the network. Peer Count = %d\n", db[i].peer.listening_addr, db[i].peer.listening_port, peer_count);
             }
         }
         
@@ -101,6 +105,12 @@ int db_AddPeer(const PeerInfo* peer, int num_of_files, const FileInfo files[])
             // check address and port
             if(strcmp(peer->listening_addr, db[i].peer.listening_addr) == 0 && peer->listening_port == db[i].peer.listening_port)
             {
+                // print info message that number of shared files has changed
+                if(db[i].file_count != num_of_files)
+                {
+                    printf("INFO: Peer \"%s:%d\" now shares %d files\n", db[i].peer.listening_addr, db[i].peer.listening_port, num_of_files);
+                }
+                
                 // update database entry
                 db[i].file_count = num_of_files;
                 memcpy(db[i].files, files, num_of_files * sizeof(FileInfo));
@@ -123,6 +133,9 @@ int db_AddPeer(const PeerInfo* peer, int num_of_files, const FileInfo files[])
             db[i].file_count = num_of_files;
             memcpy(db[i].files, files, num_of_files * sizeof(FileInfo));
             db[i].timestamp = time(NULL);
+
+            peer_count++;
+            printf("INFO: Peer \"%s:%d\" joined the network with %d files. Peer Count = %d\n", db[i].peer.listening_addr, db[i].peer.listening_port, num_of_files, peer_count);
 
             // leave
             goto unlock;
