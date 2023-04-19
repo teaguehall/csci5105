@@ -3,11 +3,13 @@
 
 #include <stdint.h>
 
+#define MAX_FILE_NAME_SIZE 512      // bytes
+
 typedef struct FileInfo
 {
-    char name[512];
-    uint32_t size;          // size of file in bytes
-    uint32_t check_sum;     // resulting checksum of file data
+    char name[MAX_FILE_NAME_SIZE];
+    uint32_t size;                  // size of file in bytes
+    uint32_t check_sum;             // resulting checksum of file data
 
 } FileInfo;
 

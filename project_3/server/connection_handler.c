@@ -6,19 +6,66 @@
 #include <stdint.h>
 
 #include "connection_handler.h"
+#include "database.h"
 
 #include "../shared/assumptions.h"
 #include "../shared/tcp.h"
 #include "../shared/msg.h"
+#include "../shared/file_info.h"
 
 void msgHandler_DiscoverRequest(ConnectionInfo* connection_info, char* msg)
 {
-    printf("TODO - msgHandler_DiscoverRequest\n");
+    char response[MAX_MSG_SIZE_BYTES];
+    FileInfo files[MAX_PEERS_IN_NETWORK * MAX_FILES_PER_PEER];
+    int num_of_files;
+    
+    // query files against database and build response message
+    if(db_DiscoverFiles(&num_of_files, files))
+    {
+        msg_Build_ErrorResponse(response, "Internal server error in db_DiscoverFiles()");
+    }
+    else
+    {
+        msg_Build_DiscoverResponse(response, num_of_files, files);
+    }
+
+    // send response
+    if(tcp_Send(connection_info->socket, response, msg_GetActualSize(response), 5))
+    {
+        fprintf(stderr, "ERROR: Server failed to send DISCOVER-RESPONSE\n");
+    }  
 }
 
 void msgHandler_FindRequest(ConnectionInfo* connection_info, char* msg)
 {
-    printf("TODO - msgHandler_FindRequest\n");
+    char response[MAX_MSG_SIZE_BYTES];
+    char file_name[MAX_FILE_NAME_SIZE];
+    PeerInfo peers[MAX_PEERS_IN_NETWORK];
+    int num_of_peers;
+
+    // parse received message
+    if(msg_Parse_FindRequest(msg, file_name))
+    {
+        msg_Build_ErrorResponse(response, "Server received ill-formatted FIND-REQUEST message");
+    }
+    else
+    {
+        // query files against database and build response message
+        if(db_FindFile(file_name, &num_of_peers, peers))
+        {
+            msg_Build_ErrorResponse(response, "Internal server error in db_FindFile()");
+        }
+        else
+        {
+            msg_Build_FindResponse(response, num_of_peers, peers);
+        }
+    }
+
+    // send response
+    if(tcp_Send(connection_info->socket, response, msg_GetActualSize(response), 5))
+    {
+        fprintf(stderr, "ERROR: Server failed to send FIND-RESPONSE\n");
+    }
 }
 
 void msgHandler_UpdateListRequest(ConnectionInfo* connection_info, char* msg)
@@ -28,12 +75,54 @@ void msgHandler_UpdateListRequest(ConnectionInfo* connection_info, char* msg)
 
 void msgHandler_PingRequest(ConnectionInfo* connection_info, char* msg)
 {
-    printf("TODO - msgHandler_PingRequest\n");
+    char response[MAX_MSG_SIZE_BYTES];
+    PeerInfo peer;
+    int recognized;
+
+    int db_KeepAlive(const PeerInfo* peer);
+
+    // parse received message
+    if(msg_Parse_PingRequest(msg, &peer))
+    {
+        msg_Build_ErrorResponse(response, "Server received ill-formatted PING-REQUEST message");
+    }
+    else
+    {
+        // update keep alive
+        if(db_KeepAlive(&peer))
+        {
+            recognized = 0;
+        }
+        else
+        {
+            recognized = 1;
+        }
+    }
+
+    // build response
+    msg_Build_PingResponse(response, recognized);
+
+    // send response
+    if(tcp_Send(connection_info->socket, response, msg_GetActualSize(response), 5))
+    {
+        fprintf(stderr, "ERROR: Server failed to send PING-RESPONSE\n");
+    }
 }
 
-void msgHandler_UnknownRequest(ConnectionInfo* connection_info, char* msg)
+void msgHandler_UnknownRequest(ConnectionInfo* connection_info, uint32_t msg_type)
 {
-    printf("TODO - msgHandler_UnknownRequest\n");
+    char response[MAX_MSG_SIZE_BYTES];
+    char error_msg[512];
+
+    // build error response
+    sprintf(error_msg, "Unknown message type \"%u\" received from client", msg_type);
+    msg_Build_ErrorResponse(response, error_msg);
+
+    // send response
+    if(tcp_Send(connection_info->socket, response, msg_GetActualSize(response), 5))
+    {
+        fprintf(stderr, "ERROR: Server failed to send UNKNOWN-REQUEST-RESPONSE\n");
+    }
 }
 
 void* connectionHandler(void* vargp)
@@ -88,7 +177,7 @@ void* connectionHandler(void* vargp)
             msgHandler_PingRequest(&connection, rcvd_msg);
             break;
         default:
-            msgHandler_UnknownRequest(&connection, rcvd_msg);
+            msgHandler_UnknownRequest(&connection, msg_recv_type);
             break;
     }
 
