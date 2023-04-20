@@ -41,6 +41,7 @@
         "assumptions.h": "c",
         "peer_info.h": "c",
         "typeindex": "c",
-        "typeinfo": "c"
+        "typeinfo": "c",
+        "checksum.h": "c"
     }
 }

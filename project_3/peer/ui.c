@@ -11,8 +11,9 @@
 #include "render.h"
 #include "broadcaster.h"
 #include "send.h"
-#include "file_writer.h"
+#include "file.h"
 #include "checksum.h"
+#include "peer_selection.h"
 #include "../shared/server_info.h"
 #include "../shared/peer_info.h"
 #include "../shared/assumptions.h"
@@ -26,7 +27,6 @@ static void* threadUi(void *vargp)
     FileInfo files[MAX_PEERS_IN_NETWORK * MAX_FILES_PER_PEER];
     int num_of_files;
     PeerInfo peers[MAX_PEERS_IN_NETWORK];
-    PeerInfo sorted_peers[MAX_PEERS_IN_NETWORK];
     int num_of_peers;
     int i;
     char* file_name;
@@ -100,7 +100,7 @@ static void* threadUi(void *vargp)
             // throw error if no file was found
             if(num_of_peers == 0)
             {
-                printf("ERROR: Requested file \"%s\" does not exist on the network.\n");
+                printf("ERROR: Requested file \"%s\" does not exist on the network.\n", file_name);
                 continue;
             }
 
@@ -115,14 +115,17 @@ static void* threadUi(void *vargp)
                 if(send_DownloadRequest(peers + i, file_name, &downloaded_file_info, downloaded_bytes) == 0)
                 {
                     // we succeeded with download, now write it to disk
-                    file_writer(file)
+                    file_writer(&downloaded_file_info, downloaded_bytes);
                     downloaded = 1;
                     break; 
                 }
             }
 
-            // write downloaded
-
+            // print error message if no downloads were successful
+            if(!downloaded)
+            {
+                fprintf(stderr, "ERROR: Failed to download file \"%s\"\n", file_name);
+            }
         }
 
         /////////////////////////////////////////////////// HELP HANDLER //////////////////////////////////////////////////////

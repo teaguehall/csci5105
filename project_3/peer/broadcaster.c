@@ -47,7 +47,7 @@ static void get_file_info(int do_checksum, int* out_file_count, FileInfo out_fil
         // calculate file size and checksum if asked to do so
         if(do_checksum)
         {
-            if(checksum(_shared_dir, out_files + (*out_file_count)))
+            if(checksum_file(_shared_dir, out_files + (*out_file_count)))
             {
                 fprintf(stderr, "Failed to compute checksum on \"%s\"\n", out_files[*out_file_count].name);
                 goto close;

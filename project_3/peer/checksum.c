@@ -5,7 +5,7 @@
 
 #include "checksum.h"
 
-// from: https://web.mit.edu/freebsd/head/sys/libkern/crc32.c
+// method courtesty of: https://web.mit.edu/freebsd/head/sys/libkern/crc32.c
 
 const uint32_t crc32_tab[] = 
 {
@@ -73,7 +73,19 @@ const uint32_t crc32_tab[] =
  *	}
  */
 
-int checksum(const char* folder, FileInfo* file_info_to_modify)
+int checksum_bytes(size_t num_of_bytes, const char* bytes, uint32_t* out_check_sum)
+{
+	*out_check_sum = ~0U;
+	for(size_t i = 0; i < num_of_bytes; i++)
+    {
+        *out_check_sum = crc32_tab[(*out_check_sum ^ bytes[i]) & 0xFF] ^ (*out_check_sum ^ bytes[i] >> 8);
+    }
+    *out_check_sum = (*out_check_sum) ^ ~0U;
+
+	return 0;
+}
+
+int checksum_file(const char* folder, FileInfo* file_info_to_modify)
 {
     char file_path[512];
     uint8_t byte;
