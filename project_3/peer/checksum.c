@@ -73,22 +73,22 @@ const uint32_t crc32_tab[] =
  *	}
  */
 
-int checksum_bytes(size_t num_of_bytes, const char* bytes, uint32_t* out_check_sum)
+uint32_t checksum_bytes(size_t num_of_bytes, const char* bytes)
 {
-	*out_check_sum = ~0U;
+	uint32_t checksum = ~0U;
 	for(size_t i = 0; i < num_of_bytes; i++)
-    {
-        *out_check_sum = crc32_tab[(*out_check_sum ^ bytes[i]) & 0xFF] ^ (*out_check_sum ^ bytes[i] >> 8);
+    {   
+		checksum = crc32_tab[(checksum ^ bytes[i]) & 0xFF] ^ (checksum >> 8);
     }
-    *out_check_sum = (*out_check_sum) ^ ~0U;
+    checksum = (checksum) ^ ~0U;
 
-	return 0;
+	return checksum;
 }
 
 int checksum_file(const char* folder, FileInfo* file_info_to_modify)
 {
     char file_path[512];
-    uint8_t byte;
+    char byte;
 
     // build full file path
     strcpy(file_path, folder);
@@ -113,7 +113,7 @@ int checksum_file(const char* folder, FileInfo* file_info_to_modify)
     file_info_to_modify->check_sum = ~0U;
     while(fread(&byte, 1, 1, file) > 0)
     {
-        file_info_to_modify->check_sum = crc32_tab[(file_info_to_modify->check_sum ^ byte) & 0xFF] ^ (file_info_to_modify->check_sum >> 8);
+		file_info_to_modify->check_sum = crc32_tab[(file_info_to_modify->check_sum ^ byte) & 0xFF] ^ (file_info_to_modify->check_sum >> 8);
     }
     file_info_to_modify->check_sum = (file_info_to_modify->check_sum) ^ ~0U;
 

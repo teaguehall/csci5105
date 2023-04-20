@@ -5,6 +5,6 @@
 #include "../shared/peer_info.h"
 
 // returns 0 on success, -1 on error
-int ui_Init(ServerInfo* server_info, PeerInfo* peer_info, const char* shared_dir);
+int ui_Init(void);
 
 #endif // PEER_UI_H

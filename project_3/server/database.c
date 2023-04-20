@@ -246,7 +246,7 @@ int db_DiscoverFiles(int* out_num_of_files, FileInfo out_files[])
                 // verify we have not already outputted this file name (don't want to output duplicates)
                 for(int k = 0; k < *out_num_of_files; k++)
                 {
-                    if(strcmp(db[i].files[j].name, out_files[*out_num_of_files].name) == 0)
+                    if(strcmp(db[i].files[j].name, out_files[k].name) == 0)
                     {
                         duplicate = 1;
                         break;

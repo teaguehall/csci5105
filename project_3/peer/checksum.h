@@ -5,6 +5,6 @@
 
 // returns 0 on success, -1 on error
 int checksum_file(const char* folder, FileInfo* file_info_to_modify);
-int checksum_bytes(size_t num_of_bytes, const char* bytes, uint32_t* out_check_sum);
+uint32_t checksum_bytes(size_t num_of_bytes, const char* bytes);
 
 #endif // PEER_CHECKSUM_H

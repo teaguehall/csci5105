@@ -13,22 +13,25 @@
 #include "../shared/peer_info.h"
 #include "../shared/assumptions.h"
 
-static ServerInfo _server_info;
-static PeerInfo _peer_info;
-static char _shared_dir[512];
+extern ServerInfo g_server_info;
+extern PeerInfo g_our_info;
+extern char g_shared_folder[512];
 
-static void get_file_info(int do_checksum, int* out_file_count, FileInfo out_files[])
+int broadcaster_GetOurFiles(int do_checksum, int* out_file_count, FileInfo out_files[])
 {
+    int error = 0; // assume success
+    
     DIR* pdir;
     struct dirent* pentry;
 
     *out_file_count = 0;
     
     // open directory
-    pdir = opendir(_shared_dir);
+    pdir = opendir(g_shared_folder);
     if(pdir == NULL)
     {
-        fprintf(stderr, "Error opening shared folder \"%s\": %s. Exitting...\n", _shared_dir, strerror(errno));
+        fprintf(stderr, "Error opening shared folder \"%s\": %s. Exitting...\n", g_shared_folder, strerror(errno));
+        error = 1;
         goto close;
     }
 
@@ -47,9 +50,10 @@ static void get_file_info(int do_checksum, int* out_file_count, FileInfo out_fil
         // calculate file size and checksum if asked to do so
         if(do_checksum)
         {
-            if(checksum_file(_shared_dir, out_files + (*out_file_count)))
+            if(checksum_file(g_shared_folder, out_files + (*out_file_count)))
             {
                 fprintf(stderr, "Failed to compute checksum on \"%s\"\n", out_files[*out_file_count].name);
+                error = 1;
                 goto close;
             }
         }
@@ -63,7 +67,10 @@ static void get_file_info(int do_checksum, int* out_file_count, FileInfo out_fil
 
     // close directory
     close:
-    closedir(pdir);        
+    closedir(pdir);       
+
+    // return error status
+    return error;
 }
 
 static void broadcast(void)
@@ -72,10 +79,10 @@ static void broadcast(void)
     FileInfo files[MAX_FILES_PER_PEER];
     
     // get file info
-    get_file_info(1, &file_count, files);
+    broadcaster_GetOurFiles(1, &file_count, files);
 
     // broadcast files to server
-    if(send_UpdateListRequest(&_server_info, &_peer_info, file_count, files))
+    if(send_UpdateListRequest(&g_server_info, &g_our_info, file_count, files))
     {
         fprintf(stderr, "WARN: Failed to broadcast files to server.\n");
     }
@@ -89,7 +96,7 @@ static void* threadPing(void *vargp)
     while(1)
     {
         // send ping request
-        if(send_PingRequest(&_server_info, &_peer_info, &recognized))
+        if(send_PingRequest(&g_server_info, &g_our_info, &recognized))
         {
             fprintf(stderr, "WARN: Failed to ping server.");
         }
@@ -98,7 +105,6 @@ static void* threadPing(void *vargp)
             // if server doesn't recognize us (because it crashed and restarted...), broadcast our info
             if(!recognized)
             {
-                printf("Ping wasn't recognized, broadcast\n"); // TODO
                 broadcast();
             }
         }
@@ -120,12 +126,11 @@ static void* threadFileMonitor(void *vargp)
     while(1)
     {
         // get updated file information
-        get_file_info(0, &curr_count, curr_files);
+        broadcaster_GetOurFiles(0, &curr_count, curr_files);
 
         // broadcast files if they have changed
         if(curr_count != prev_count)
         {
-            printf("File montioring broadcast: new file count\n"); // TODO
             broadcast();
         }
         else
@@ -135,7 +140,6 @@ static void* threadFileMonitor(void *vargp)
             {
                 if(strcmp(curr_files[i].name, prev_files[i].name) != 0)
                 {
-                    printf("File montioring broadcast: change in file count\n"); // TODO
                     broadcast();
                     break;
                 }
@@ -153,15 +157,10 @@ static void* threadFileMonitor(void *vargp)
     return NULL;
 }
 
-int broadcaster_Init(ServerInfo* server_info, PeerInfo* peer_info, const char* shared_dir)
+int broadcaster_Init()
 {
     pthread_t thread_ping;
     pthread_t thread_file_monitor;
-    
-    // save information related to file publishing
-    _server_info = *server_info;
-    _peer_info = *peer_info;
-    strcpy(_shared_dir, shared_dir);
 
     // spawn file monitor thread
     if(pthread_create(&thread_file_monitor, NULL, threadFileMonitor, NULL) != 0)

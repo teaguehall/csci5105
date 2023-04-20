@@ -42,6 +42,7 @@
         "peer_info.h": "c",
         "typeindex": "c",
         "typeinfo": "c",
-        "checksum.h": "c"
+        "checksum.h": "c",
+        "connection_info.h": "c"
     }
 }

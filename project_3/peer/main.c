@@ -4,19 +4,20 @@
 #include <errno.h>
 #include <dirent.h>
 #include <pthread.h>
+#include <unistd.h>
 
 #include "broadcaster.h"
 #include "ui.h"
-#include "request_handler.h"
+#include "connection_handler.h"
 
 #include "../shared/server_info.h"
 #include "../shared/peer_info.h"
 #include "../shared/connection_info.h"
 #include "../shared/tcp.h"
 
-ServerInfo server_info;
-PeerInfo our_info;
-char* shared_folder;
+ServerInfo g_server_info;
+PeerInfo g_our_info;
+char g_shared_folder[512];
 
 int main(int argc, char* argv[])
 {
@@ -44,17 +45,18 @@ int main(int argc, char* argv[])
     }
     else
     {
-        memcpy(our_info.listening_addr, argv[1], strlen(argv[1]) + 1);
+        memcpy(g_our_info.listening_addr, argv[1], strlen(argv[1]) + 1);
     }
 
     // verify shared folder exists
-    shared_folder = argv[2];
+    strncpy(g_shared_folder, argv[2], sizeof(g_shared_folder));
+    g_shared_folder[sizeof(g_shared_folder) - 1] = 0; // null term
     
     DIR *shared_dir;
-    shared_dir = opendir(shared_folder);
+    shared_dir = opendir(g_shared_folder);
     if(shared_dir == NULL)
     {
-        fprintf(stderr, "Error opening shared folder \"%s\": %s. Exitting...\n", shared_folder, strerror(errno));
+        fprintf(stderr, "Error opening shared folder \"%s\": %s. Exitting...\n", g_shared_folder, strerror(errno));
         exit(EXIT_FAILURE);
     }
     closedir(shared_dir);
@@ -62,32 +64,32 @@ int main(int argc, char* argv[])
     char* endptr;
 
     // validate latitude coordinate
-    our_info.latitude = strtod(argv[3], &endptr);
-    if(endptr == argv[3] || our_info.latitude < -90.0 || our_info.latitude > 90.0)
+    g_our_info.latitude = strtod(argv[3], &endptr);
+    if(endptr == argv[3] || g_our_info.latitude < -90.0 || g_our_info.latitude > 90.0)
     {
         fprintf(stderr, "ERROR: Invalid latitude of node \"%s\" provided (-90.0 thru 90.0 allowed). Exitting...\n", argv[3]);
         exit(EXIT_FAILURE);
     }
 
     // validate longitude coordinate
-    our_info.longitude = strtod(argv[4], &endptr);
-    if(endptr == argv[4] || our_info.longitude < -180.0 || our_info.longitude > 180.0)
+    g_our_info.longitude = strtod(argv[4], &endptr);
+    if(endptr == argv[4] || g_our_info.longitude < -180.0 || g_our_info.longitude > 180.0)
     {
         fprintf(stderr, "ERROR: Invalid longitude of node \"%s\" provided (-180.0 thru 180.0 allowed). Exitting...\n", argv[4]);
         exit(EXIT_FAILURE);
     }
 
     // validate server address
-    strcpy(server_info.listening_addr, argv[5]);
-    if(!tcp_IpAddrIsValid(server_info.listening_addr))
+    strcpy(g_server_info.listening_addr, argv[5]);
+    if(!tcp_IpAddrIsValid(g_server_info.listening_addr))
     {
         fprintf(stderr, "ERROR: Invalid server address \"%s\" provided. Exitting...\n", argv[5]);
         exit(EXIT_FAILURE);
     }
 
     // validate server port
-    server_info.listening_port = atoi(argv[6]);
-    if(!tcp_PortIsValid(server_info.listening_port))
+    g_server_info.listening_port = atoi(argv[6]);
+    if(!tcp_PortIsValid(g_server_info.listening_port))
     {
         fprintf(stderr, "ERROR: Invalid server address \"%s\" provided. Exitting...\n", argv[6]);
         exit(EXIT_FAILURE);
@@ -96,9 +98,9 @@ int main(int argc, char* argv[])
     int listener_socket = -1;
 
     // create listener socket (note: we will automatically find available port to listen on, hence the loop)
-    for(our_info.listening_port = 1024; our_info.listening_port <= 65535; our_info.listening_port++)
+    for(g_our_info.listening_port = 1024; g_our_info.listening_port <= 65535; g_our_info.listening_port++)
     {
-        if(!tcp_CreateListener(our_info.listening_addr, our_info.listening_port, &listener_socket))
+        if(!tcp_CreateListener(g_our_info.listening_addr, g_our_info.listening_port, &listener_socket))
         {
             break; // successfully created listener socket
         }
@@ -114,35 +116,43 @@ int main(int argc, char* argv[])
     }
 
     // initialize broadcaster
-    if(broadcaster_Init(&server_info, &our_info, shared_folder))
+    if(broadcaster_Init())
     {
         fprintf(stderr, "ERROR: Failed to initialize broadcaster module. Exitting...\n");
         exit(EXIT_FAILURE);
     }
 
     // initialize ui
-    if(ui_Init(&server_info, &our_info, shared_folder))
+    if(ui_Init())
     {
         fprintf(stderr, "ERROR: Failed to initialize broadcaster module. Exitting...\n");
         exit(EXIT_FAILURE);
     }
 
-    ConnectionInfo connection;
-    pthread_t thread_request_handler;
+    pthread_t thread_connection_handler;
 
     // accept connections forever
     while(1)
-    {
-        // accept connection
-        if(tcp_Accept(listener_socket, connection.remote_addr, &(connection.remote_port), &(connection.socket)))
+    { 
+        // malloc new connection object (connection handler will be responsible for freeing this)
+        ConnectionInfo* connection = malloc(sizeof(ConnectionInfo));
+        if(connection == NULL)
         {
+            fprintf(stderr, "FATAL: Failed to malloc new connection object for connection handler thread\n");
+            exit(EXIT_FAILURE);
+        }
+
+        // accept connection
+        if(tcp_Accept(listener_socket, connection->remote_addr, &(connection->remote_port), &(connection->socket)))
+        {
+            
             printf("ERROR occurred while accepting connection\n");
-            tcp_Disconnect(connection.socket);
+            tcp_Disconnect(connection->socket);
             continue;
         }
 
         // spawn thread to handle request
-        if(pthread_create(&thread_request_handler, NULL, requestHandler, (void*)(&connection)) != 0)
+        if(pthread_create(&thread_connection_handler, NULL, connectionHandler, (void*)(connection)) != 0)
         {
             fprintf(stderr, "ERROR: Failed to spawn connection handler thread. %s\n", strerror(errno));
             exit(EXIT_FAILURE);
