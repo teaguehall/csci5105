@@ -23,6 +23,9 @@ void msgHandler_GetLoadRequest(ConnectionInfo* connection_info, char* msg)
 {
     char response[MAX_MSG_SIZE_BYTES];
 
+    // add latency
+    sleep(2);
+    
     // grab current loads
     int loads = loadTracker_Get();
 

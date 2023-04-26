@@ -190,7 +190,7 @@ int send_FindRequest(const ServerInfo* server, const char* file_name, int* out_p
     return 0;
 }
 
-int send_GetLoadRequest(const PeerInfo* peer, int* out_loads)
+int send_GetLoadRequest(const PeerInfo* peer, int* bytes_per_sec)
 {
     char send_msg[MAX_MSG_SIZE_BYTES];
     char recv_msg[MAX_MSG_SIZE_BYTES];
@@ -208,7 +208,7 @@ int send_GetLoadRequest(const PeerInfo* peer, int* out_loads)
     }
 
     // parse response
-    if(msg_Parse_GetLoadResponse(recv_msg, out_loads))
+    if(msg_Parse_GetLoadResponse(recv_msg, bytes_per_sec))
     {
         return -1;
     }

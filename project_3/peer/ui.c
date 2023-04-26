@@ -33,6 +33,7 @@ static void* threadUi(void *vargp)
     int i, j;
     char* file_name;
     FileInfo downloaded_file_info;
+    int bytes_to_download;
     char downloaded_bytes[MAX_FILE_SIZE_BYTES];
     int downloaded; 
     
@@ -102,6 +103,29 @@ static void* threadUi(void *vargp)
         {
             file_name = command + 9; // command = "DOWNLOAD;<file name>", thus we add an offset of 9 to the command input
             
+            // send discover request to server
+            if(send_DiscoverRequest(&g_server_info, &num_of_files, files))
+            {
+                printf("ERROR: Failed to send discover request while attempting to determine file size\n");
+                continue;
+            }
+
+            // iterate over files to determine size of requested file
+            bytes_to_download = -1;
+            for(i = 0; i < num_of_files; i++)
+            {
+                if(strcmp(file_name, files[i].name) == 0)
+                {
+                    bytes_to_download = files[i].size;
+                }
+            }
+
+            if(bytes_to_download == -1)
+            {
+                printf("ERROR: Requested file \"%s\" does not exist on the network.\n", file_name);
+                continue;
+            }
+            
             // send request to server find eligble peers
             if(send_FindRequest(&g_server_info, file_name, &num_of_peers, peers))
             {
@@ -118,7 +142,7 @@ static void* threadUi(void *vargp)
 
             // run select algorithm on the set of peers
             // note: this simply sorts the peers based on "best to worst"
-            peerSelection_Sort(num_of_peers, peers);
+            peerSelection_Sort(bytes_to_download, num_of_peers, peers);
 
             // attempt to download file from peer(s)
             downloaded = 0;
