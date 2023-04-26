@@ -20,11 +20,11 @@ The user-interface will then prompt the user for further actions.
 
 EXAMPLE 1: P2P network with five peers. Tracking server is listening at 127.0.0.1 port 8888. Each peer has a dedicated folder<br />
 
-./server.out 127.0.0.1 8888
-./peer.out 127.0.0.1 "./testing/peer_1" 127.0.0.1 8888
-./peer.out 127.0.0.1 "./testing/peer_2" 127.0.0.1 8888
-./peer.out 127.0.0.1 "./testing/peer_3" 127.0.0.1 8888
-./peer.out 127.0.0.1 "./testing/peer_4" 127.0.0.1 8888
-./peer.out 127.0.0.1 "./testing/peer_5" 127.0.0.1 8888
+./server.out 127.0.0.1 8888<br />
+./peer.out 127.0.0.1 "./testing/peer_1" 127.0.0.1 8888<br />
+./peer.out 127.0.0.1 "./testing/peer_2" 127.0.0.1 8888<br />
+./peer.out 127.0.0.1 "./testing/peer_3" 127.0.0.1 8888<br />
+./peer.out 127.0.0.1 "./testing/peer_4" 127.0.0.1 8888<br />
+./peer.out 127.0.0.1 "./testing/peer_5" 127.0.0.1 8888<br />
 
 TEST.SH: This is a script for launching a test environment.
