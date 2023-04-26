@@ -21,16 +21,19 @@ extern char g_shared_folder[512];
 
 void msgHandler_GetLoadRequest(ConnectionInfo* connection_info, char* msg)
 {
+    time_t t;
     char response[MAX_MSG_SIZE_BYTES];
 
-    // add latency
-    sleep(2);
+    // simulate latency between 100 and 1000ms
+    srand((unsigned) time(&t));
+    int latency_ms = (rand() % 901) + 100;
+    usleep(latency_ms * 1000);
     
     // grab current loads
-    int loads = loadTracker_Get();
+    int throughput = loadTracker_GetThroughPut();
 
     // build response
-    msg_Build_GetLoadResponse(response, loads);
+    msg_Build_GetLoadResponse(response, throughput);
 
     // send response
     if(tcp_Send(connection_info->socket, response, msg_GetActualSize(response), 5))
@@ -41,6 +44,7 @@ void msgHandler_GetLoadRequest(ConnectionInfo* connection_info, char* msg)
 
 void msgHandler_DownloadRequest(ConnectionInfo* connection_info, char* msg)
 {
+    time_t t;
     char error_msg[1024];
     char response[MAX_MSG_SIZE_BYTES];
     char requested_file_name[512];
@@ -73,14 +77,22 @@ void msgHandler_DownloadRequest(ConnectionInfo* connection_info, char* msg)
         }
     }
 
-    // sleep to simulate latency
-    sleep(1);
+    // increment load counter
+    loadTracker_Add();
+
+    // simulate latency between 100 and 1000ms
+    srand((unsigned) time(&t));
+    int latency_ms = (rand() % 901) + 100;
+    usleep(latency_ms * 1000);
 
     // send response
     if(tcp_Send(connection_info->socket, response, msg_GetActualSize(response), 5))
     {
         fprintf(stderr, "ERROR: Server failed to send DOWNLOAD-REQUEST-RESPONSE\n");
     }
+
+    // decrement load counter
+    loadTracker_Sub();
 }
 
 void msgHandler_UnknownRequest(ConnectionInfo* connection_info, uint32_t msg_type)

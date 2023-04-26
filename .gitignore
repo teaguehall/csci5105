@@ -6,3 +6,6 @@ comms_clnt.c
 comms_svc.c
 comms_xdr.c
 comms.h
+
+# project 3 specifics
+/project_3/testing/

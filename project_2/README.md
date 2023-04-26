@@ -1,3 +1,8 @@
+QUICKSTART: 
+- Run "make" on top-level Makefile to make client and server executables.
+- Run "server_control.sh" script to launch all servers.
+- Run "./client.out <username> 127.0.0.1 5555" to get started
+
 OVERVIEW: Source code for the bulletin-board is split among three folders: client, server, and shared. <br />
 Source code specific to the client and server can be found in their respective folders, while code <br />
 shared between both the client and server can be found within the the shared folder. <br />
@@ -39,3 +44,4 @@ READ-YOUR-WRITE <br />
 127.0.0.1:9999 <br />
 
 SERVER_CONTROL.SH: This is a helper script for launching multiple servers in the background. Note that this file needs to the match the servers specified in config.txt
+

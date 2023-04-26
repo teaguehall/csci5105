@@ -190,7 +190,7 @@ int send_FindRequest(const ServerInfo* server, const char* file_name, int* out_p
     return 0;
 }
 
-int send_GetLoadRequest(const PeerInfo* peer, int* bytes_per_sec)
+int send_GetLoadThoughputRequest(const PeerInfo* peer, int* bytes_per_sec)
 {
     char send_msg[MAX_MSG_SIZE_BYTES];
     char recv_msg[MAX_MSG_SIZE_BYTES];

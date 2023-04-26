@@ -22,17 +22,14 @@ char g_shared_folder[512];
 int main(int argc, char* argv[])
 {
     // verify number of input arguments
-    if(argc < 7 || argc > 7)
+    if(argc < 5 || argc > 5)
     {
         fprintf(stderr, "\n");
         fprintf(stderr, "ERROR: Unexpected number of input arguments received. Expected:\n");
         fprintf(stderr, " * REQUIRED: Peer - Binding Interface (e.g. 127.0.0.1)\n");
         fprintf(stderr, " * REQUIRED: Peer - Path to Shared Directory\n");
-        fprintf(stderr, " * REQUIRED: Peer - Latitude Location (-90 to 90) \n");
-        fprintf(stderr, " * REQUIRED: Peer - Latitude Location (-180 to 180) \n");
         fprintf(stderr, " * REQUIRED: Server - Address (xxx.xxx.xxx.xxx)\n");
         fprintf(stderr, " * REQUIRED: Server - Port\n");
-        // TODO add optional args for test scenarios
         fprintf(stderr, "\n");
         exit(EXIT_FAILURE);
     }
@@ -61,37 +58,19 @@ int main(int argc, char* argv[])
     }
     closedir(shared_dir);
 
-    char* endptr;
-
-    // validate latitude coordinate
-    g_our_info.latitude = strtod(argv[3], &endptr);
-    if(endptr == argv[3] || g_our_info.latitude < -90.0 || g_our_info.latitude > 90.0)
-    {
-        fprintf(stderr, "ERROR: Invalid latitude of node \"%s\" provided (-90.0 thru 90.0 allowed). Exitting...\n", argv[3]);
-        exit(EXIT_FAILURE);
-    }
-
-    // validate longitude coordinate
-    g_our_info.longitude = strtod(argv[4], &endptr);
-    if(endptr == argv[4] || g_our_info.longitude < -180.0 || g_our_info.longitude > 180.0)
-    {
-        fprintf(stderr, "ERROR: Invalid longitude of node \"%s\" provided (-180.0 thru 180.0 allowed). Exitting...\n", argv[4]);
-        exit(EXIT_FAILURE);
-    }
-
     // validate server address
-    strcpy(g_server_info.listening_addr, argv[5]);
+    strcpy(g_server_info.listening_addr, argv[3]);
     if(!tcp_IpAddrIsValid(g_server_info.listening_addr))
     {
-        fprintf(stderr, "ERROR: Invalid server address \"%s\" provided. Exitting...\n", argv[5]);
+        fprintf(stderr, "ERROR: Invalid server address \"%s\" provided. Exitting...\n", argv[3]);
         exit(EXIT_FAILURE);
     }
 
     // validate server port
-    g_server_info.listening_port = atoi(argv[6]);
+    g_server_info.listening_port = atoi(argv[4]);
     if(!tcp_PortIsValid(g_server_info.listening_port))
     {
-        fprintf(stderr, "ERROR: Invalid server address \"%s\" provided. Exitting...\n", argv[6]);
+        fprintf(stderr, "ERROR: Invalid server address \"%s\" provided. Exitting...\n", argv[4]);
         exit(EXIT_FAILURE);
     }
 

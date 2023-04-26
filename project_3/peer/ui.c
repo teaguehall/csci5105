@@ -51,6 +51,7 @@ static void* threadUi(void *vargp)
                 
         if(fgets(command, sizeof(command), stdin) == NULL)
         {
+            pause(); // TODO, need this to have program run in background. kind of hacky
             fprintf(stderr, "ERROR: fgets call failed with error \"%s\"\n", strerror(errno));
             exit(EXIT_FAILURE);
         }
@@ -145,13 +146,17 @@ static void* threadUi(void *vargp)
             peerSelection_Sort(bytes_to_download, num_of_peers, peers);
 
             // attempt to download file from peer(s)
+            printf("Attempt to download file from peer(s)\n");
+            printf(DIVIDER_LINE);
+            
             downloaded = 0;
             for(i = 0; i < num_of_peers; i++)
             {
                 // multiple attempts can be made per peer
                 for(j = 1; j < (RETRY_ATTEMPTS_PER_PEER + 1); j++)
                 {
-                    printf("Attempt #%d to download file \"%s\" from peer %s:%d...\n", j, file_name, peers[i].listening_addr, peers[i].listening_port);
+                    printf("* Attempt #%d to download file \"%s\" from peer %s:%d... ", j, file_name, peers[i].listening_addr, peers[i].listening_port);
+                    fflush(stdout);
                     if(send_DownloadRequest(peers + i, file_name, &downloaded_file_info, downloaded_bytes) == 0)
                     {
                         // validate file check sum
@@ -160,12 +165,12 @@ static void* threadUi(void *vargp)
                             // we succeeded with download, now write it to disk
                             file_writer(g_shared_folder, &downloaded_file_info, downloaded_bytes);
                             downloaded = 1;
+                            printf("Success!\n");
                             goto done;  
                         }
                         else
                         {
-                            
-                            printf("Download failed checksum validation\n");
+                            printf("Failed checksum validation!\n");
                         }
                     }
                 }
@@ -175,11 +180,14 @@ static void* threadUi(void *vargp)
             done: 
             if(downloaded)
             {
-                printf("Successfully downloaded \"%s\" from peer %s:%d\n\n", file_name, peers[i].listening_addr, peers[i].listening_port);
+                printf("\n");
+                printf(DIVIDER_LINE);
+                printf("\nSuccessfully downloaded \"%s\" from peer %s:%d\n\n", file_name, peers[i].listening_addr, peers[i].listening_port);
             }
             else
             {
-                fprintf(stderr, "ERROR: Failed to download file \"%s\"\n\n", file_name);
+                printf(DIVIDER_LINE);
+                fprintf(stderr, "\nERROR: Failed to download file \"%s\"\n\n", file_name);
             }
         }
 

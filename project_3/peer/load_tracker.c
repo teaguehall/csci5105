@@ -6,6 +6,10 @@
 #include <unistd.h>
 
 #include "load_tracker.h"
+#include "../shared/assumptions.h"
+
+#define MAX_THROUGH_PUT             125000000 // corresponds to 1Gbps
+#define LOAD_THROUGH_PUT_WEIGHT     (MAX_THROUGH_PUT / MAX_PEERS_IN_NETWORK);
 
 pthread_mutex_t loads_lock = PTHREAD_MUTEX_INITIALIZER;
 static int loads = 0;
@@ -32,7 +36,7 @@ void loadTracker_Sub(void)
     if(pthread_mutex_unlock(&loads_lock) != 0) {fprintf(stderr, "FATAL: Failed to release load tracker lock. %s. Killing peer...", strerror(errno)); exit(EXIT_FAILURE);}
 }
 
-int loadTracker_Get(void)
+int loadTracker_GetThroughPut(void)
 {
     int loads_local;
     
@@ -44,5 +48,5 @@ int loadTracker_Get(void)
     // release mutex lock
     if(pthread_mutex_unlock(&loads_lock) != 0) {fprintf(stderr, "FATAL: Failed to release load tracker lock. %s. Killing peer...", strerror(errno)); exit(EXIT_FAILURE);}
 
-    return loads_local;
+    return MAX_THROUGH_PUT - loads_local * LOAD_THROUGH_PUT_WEIGHT;
 }

@@ -97,18 +97,18 @@ void render_PeersWithFile(const char* file_name, int num_of_peers, const PeerInf
     // print peers
     if(num_of_peers)
     {
-        printf("%-16s%-16s%-16s%-16s\n\n", "address", "port", "lat.", "long.");
+        printf("%-16s%-16s\n\n", "address", "port");
 
         for(int i = 0; i < num_of_peers; i++)
         {
             // make a little symbol indicating which peer is "us"
             if(strcmp(peers[i].listening_addr, g_our_info.listening_addr) == 0 && peers[i].listening_port == g_our_info.listening_port) 
             {
-                printf("%-16s%-16d%-16f%-16f<-- \"us\"\n", peers[i].listening_addr, peers[i].listening_port, peers[i].latitude, peers[i].longitude);
+                printf("%-16s%-16d<-- \"us\"\n", peers[i].listening_addr, peers[i].listening_port);
             }
             else
             {
-                printf("%-16s%-16d%-16f%-16f\n", peers[i].listening_addr, peers[i].listening_port, peers[i].latitude, peers[i].longitude);
+                printf("%-16s%-16d\n", peers[i].listening_addr, peers[i].listening_port);
             }
             
         }

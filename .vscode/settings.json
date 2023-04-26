@@ -43,6 +43,7 @@
         "typeindex": "c",
         "typeinfo": "c",
         "checksum.h": "c",
-        "connection_info.h": "c"
+        "connection_info.h": "c",
+        "cstdlib": "c"
     }
 }
